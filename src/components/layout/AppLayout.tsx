@@ -1,0 +1,23 @@
+import { ReactNode } from 'react';
+import { Header } from './Header';
+
+interface AppLayoutProps {
+  children: ReactNode;
+}
+
+/**
+ * AppLayout - Container principal que aplica o layout completo
+ * Inclui Header fixo e área de conteúdo
+ */
+export const AppLayout = ({ children }: AppLayoutProps) => {
+  return (
+    <div className="flex flex-col h-screen w-full overflow-hidden">
+      <Header />
+      
+      {/* Main Content - com padding-top para compensar o header fixo */}
+      <main className="flex-1 overflow-hidden pt-16">
+        {children}
+      </main>
+    </div>
+  );
+};

@@ -30,7 +30,7 @@ export interface SettingsState {
 }
 
 const defaultSettings = {
-  theme: 'dark' as const,
+  theme: 'light' as const, // Modo claro como padrão
   fontSize: 14,
   fontFamily: 'system-ui, -apple-system, sans-serif',
   editorFontSize: 14,
