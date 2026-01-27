@@ -45,6 +45,7 @@ export const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
 		markdownViewMode,
 		enableStatusColors,
 		enableHighlightActiveLine,
+		restoreCursorPosition,
 		updateSettings,
 	} = useSettingsStore();
 
@@ -111,6 +112,13 @@ export const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
 									<Switch
 										checked={enableStatusColors}
 										onChange={(v) => updateSettings({ enableStatusColors: v })}
+									/>
+								</SettingRow>
+
+								<SettingRow label="Continuar digitando no histórico do ponteiro">
+									<Switch
+										checked={restoreCursorPosition}
+										onChange={(v) => updateSettings({ restoreCursorPosition: v })}
 									/>
 								</SettingRow>
 

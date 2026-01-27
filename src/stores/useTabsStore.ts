@@ -10,6 +10,10 @@ export interface Tab {
 	isModified: boolean;
 	createdAt: number;
 	updatedAt: number;
+	selection?: {
+		anchor: number;
+		head: number;
+	};
 }
 
 export interface TabsState {
@@ -23,6 +27,7 @@ export interface TabsState {
 	setActiveTab: (id: string) => void;
 	updateTabContent: (id: string, content: string) => void;
 	updateTabTitle: (id: string, title: string) => void;
+	updateTabSelection: (id: string, selection: { anchor: number; head: number }) => void;
 	updateTabPath: (id: string, path: string) => void;
 	markTabAsClean: (id: string) => void;
 	closeAllTabs: () => void;
@@ -119,6 +124,16 @@ export const useTabsStore = create<TabsState>()(
 					tabs: state.tabs.map((tab) =>
 						tab.id === id
 							? { ...tab, title, isModified: true, updatedAt: Date.now() }
+							: tab
+					),
+				}));
+			},
+
+			updateTabSelection: (id: string, selection: { anchor: number; head: number }) => {
+				set((state) => ({
+					tabs: state.tabs.map((tab) =>
+						tab.id === id
+							? { ...tab, selection }
 							: tab
 					),
 				}));
