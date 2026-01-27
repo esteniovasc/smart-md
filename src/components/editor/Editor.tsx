@@ -3,11 +3,13 @@ import CodeMirror, { EditorView } from '@uiw/react-codemirror';
 import { markdown } from '@codemirror/lang-markdown';
 import { useTabsStore } from '../../stores/useTabsStore';
 import { useSettingsStore } from '../../stores/useSettingsStore';
+import { createLivePreviewExtension, livePreviewTheme } from './extensions/livePreview';
+import { statusLinesExtension, statusLinesTheme } from './extensions/statusLines';
 
 /**
  * Cria tema transparente para efeito Liquid Glass
  */
-const createGlassTheme = (isDark: boolean) => {
+const createGlassTheme = (isDark: boolean, highlightActiveLine: boolean) => {
   return EditorView.theme({
     '&': {
       backgroundColor: 'transparent',
@@ -32,7 +34,9 @@ const createGlassTheme = (isDark: boolean) => {
       padding: '0 4px',
     },
     '.cm-activeLine': {
-      backgroundColor: isDark ? 'rgba(255, 255, 255, 0.03)' : 'rgba(0, 0, 0, 0.02)',
+      backgroundColor: highlightActiveLine 
+        ? (isDark ? 'rgba(255, 255, 255, 0.03)' : 'rgba(0, 0, 0, 0.02)')
+        : 'transparent',
     },
     '.cm-selectionBackground, &.cm-focused .cm-selectionBackground': {
       backgroundColor: isDark ? 'rgba(96, 165, 250, 0.25)' : 'rgba(59, 130, 246, 0.2)',
@@ -79,6 +83,12 @@ const createGlassTheme = (isDark: boolean) => {
  */
 export const Editor = () => {
   const theme = useSettingsStore((s) => s.theme);
+  const showLineNumbers = useSettingsStore((s) => s.showLineNumbers);
+  const enableWordWrap = useSettingsStore((s) => s.enableWordWrap);
+  const markdownViewMode = useSettingsStore((s) => s.markdownViewMode);
+  const enableStatusColors = useSettingsStore((s) => s.enableStatusColors);
+  const enableHighlightActiveLine = useSettingsStore((s) => s.enableHighlightActiveLine);
+  
   const tabs = useTabsStore((s) => s.tabs);
   const activeTabId = useTabsStore((s) => s.activeTabId);
   const updateTabContent = useTabsStore((s) => s.updateTabContent);
@@ -89,11 +99,30 @@ export const Editor = () => {
 
   const isDark = theme === 'dark';
 
-  const extensions = useMemo(() => [
-    markdown(),
-    EditorView.lineWrapping,
-    createGlassTheme(isDark),
-  ], [isDark]);
+  // Extensões reativas baseadas nas configurações
+  const extensions = useMemo(() => {
+    const exts = [
+      markdown(),
+      createGlassTheme(isDark, enableHighlightActiveLine),
+    ];
+
+    // Quebra de linha
+    if (enableWordWrap) {
+      exts.push(EditorView.lineWrapping);
+    }
+
+    // Live Preview - baseado no modo selecionado
+    if (markdownViewMode !== 'visible') {
+      exts.push(createLivePreviewExtension(markdownViewMode), livePreviewTheme);
+    }
+
+    // Status Colors - pinta linhas com emojis
+    if (enableStatusColors) {
+      exts.push(statusLinesExtension, statusLinesTheme);
+    }
+
+    return exts;
+  }, [isDark, enableWordWrap, markdownViewMode, enableStatusColors, enableHighlightActiveLine]);
 
   const handleChange = useCallback((value: string) => {
     if (activeTabId) {
@@ -124,10 +153,10 @@ export const Editor = () => {
         onChange={handleChange}
         extensions={extensions}
         basicSetup={{
-          lineNumbers: true,
-          highlightActiveLineGutter: true,
-          highlightActiveLine: true,
-          foldGutter: true,
+          lineNumbers: showLineNumbers,
+          highlightActiveLineGutter: showLineNumbers && enableHighlightActiveLine,
+          highlightActiveLine: enableHighlightActiveLine,
+          foldGutter: showLineNumbers,
           dropCursor: true,
           allowMultipleSelections: true,
           indentOnInput: true,

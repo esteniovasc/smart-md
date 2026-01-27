@@ -1,6 +1,9 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
+// Modos de visualização de marcadores Markdown
+export type MarkdownViewMode = 'visible' | 'current-line' | 'hidden';
+
 export interface SettingsState {
   theme: 'dark' | 'light';
   fontSize: number;
@@ -13,6 +16,11 @@ export interface SettingsState {
   enableWordWrap: boolean;
   enableMarkdownPreview: boolean;
   language: 'pt-BR' | 'en-US';
+  
+  // Smart Decorators
+  markdownViewMode: MarkdownViewMode;  // Controle de visibilidade dos marcadores
+  enableStatusColors: boolean;         // Pinta linhas de tarefas (✅, ⚠️)
+  enableHighlightActiveLine: boolean;
 
   // Actions
   setTheme: (theme: 'dark' | 'light') => void;
@@ -26,21 +34,26 @@ export interface SettingsState {
   setEnableWordWrap: (enabled: boolean) => void;
   setEnableMarkdownPreview: (enabled: boolean) => void;
   setLanguage: (lang: 'pt-BR' | 'en-US') => void;
+  updateSettings: (partial: Partial<SettingsState>) => void;
   resetToDefaults: () => void;
 }
 
 const defaultSettings = {
-  theme: 'light' as const, // Modo claro como padrão
+  theme: 'light' as const,
   fontSize: 14,
   fontFamily: 'system-ui, -apple-system, sans-serif',
   editorFontSize: 14,
   lineHeight: 1.6,
   autoSave: true,
   autoSaveInterval: 5000,
-  showLineNumbers: true,
+  showLineNumbers: false,
   enableWordWrap: true,
   enableMarkdownPreview: false,
   language: 'pt-BR' as const,
+  // Smart Decorators defaults
+  markdownViewMode: 'current-line' as MarkdownViewMode,
+  enableStatusColors: true,
+  enableHighlightActiveLine: true,
 };
 
 export const useSettingsStore = create<SettingsState>()(
@@ -59,12 +72,13 @@ export const useSettingsStore = create<SettingsState>()(
       setEnableWordWrap: (enableWordWrap) => set({ enableWordWrap }),
       setEnableMarkdownPreview: (enableMarkdownPreview) => set({ enableMarkdownPreview }),
       setLanguage: (language) => set({ language }),
+      updateSettings: (partial) => set(partial),
 
       resetToDefaults: () => set(defaultSettings),
     }),
     {
       name: 'smart-md-settings',
-      version: 1,
+      version: 3,
     }
   )
 );

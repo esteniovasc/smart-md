@@ -2,8 +2,8 @@
 
 **Projeto:** Smart MD - Editor de Markdown PWA Offline-First  
 **Data de Início:** 26 de Janeiro de 2026  
-**Status:** 🟢 Infraestrutura Completa  
-**Versão:** 0.1.0
+**Status:** 🟢 Editor Funcional com Smart Decorators  
+**Versão:** 0.2.0
 
 ---
 
@@ -76,8 +76,22 @@
   - Persistência localStorage
   - Tema, fontes, auto-save
   - Suporte a idiomas
+  - **Novo:** markdownViewMode (3 estados)
 
 **Métodos:** 15+ no total
+
+---
+
+### ✅ ETAPA 7: Smart Decorators (CONCLUÍDO - 27/01/2026)
+- [x] Live Preview com 3 modos (Visível | Na Linha | Oculto)
+- [x] Status Colors (✅ verde, ⚠️ amarelo, 💡 azul, 🔄️ roxo, ❌ cinza)
+- [x] Janela de configurações flutuante e draggable
+- [x] SegmentedControl estilo iOS
+- [x] Switch estilo iOS
+- [x] Otimização de viewport para documentos grandes
+
+**Componentes criados:** SegmentedControl, Switch (reescrito)
+**Extensões CodeMirror:** livePreview, statusLines (otimizadas)
 
 ---
 
