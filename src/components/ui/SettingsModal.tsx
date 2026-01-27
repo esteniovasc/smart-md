@@ -1,5 +1,5 @@
 import { useRef, useState, useEffect } from 'react';
-import { motion, AnimatePresence, useDragControls } from 'framer-motion';
+import { motion, AnimatePresence, useDragControls, useMotionValue } from 'framer-motion';
 import { X, GripHorizontal, Sliders, Type, RotateCcw, Plus, Minus, Check } from 'lucide-react';
 import { Switch } from './Switch';
 import { SegmentedControl } from './SegmentedControl';
@@ -94,7 +94,11 @@ const ResetButton = ({ onConfirm, label = "Restaurar Padrões" }: { onConfirm: (
 export const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
 	const dragControls = useDragControls();
 	const constraintsRef = useRef<HTMLDivElement>(null);
+	const modalRef = useRef<HTMLDivElement>(null);
 	const [activeTab, setActiveTab] = useState<'general' | 'text'>('general');
+
+	// Motion value para controlar a posição Y manualmente
+	const y = useMotionValue(0);
 
 	const {
 		showLineNumbers,
@@ -107,17 +111,15 @@ export const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
 		setEditorFontSize,
 	} = useSettingsStore();
 
-	// Estado local para input de texto da fonte, permitindo valor vazio
 	const [localFontSize, setLocalFontSize] = useState(editorFontSize.toString());
 
-	// Sincroniza local quando a store muda externamente (ex: atalhos)
 	useEffect(() => {
 		setLocalFontSize(editorFontSize.toString());
 	}, [editorFontSize]);
 
 	const handleFontSizeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		const val = e.target.value;
-		setLocalFontSize(val); // Permite digitar livremente
+		setLocalFontSize(val);
 
 		const numVal = parseInt(val);
 		if (!isNaN(numVal) && numVal > 0) {
@@ -126,7 +128,6 @@ export const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
 	};
 
 	const handleFontSizeBlur = () => {
-		// Se estiver vazio ou inválido ao sair, restaura o valor da store
 		const numVal = parseInt(localFontSize);
 		if (isNaN(numVal) || numVal <= 0) {
 			setLocalFontSize(editorFontSize.toString());
@@ -137,7 +138,34 @@ export const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
 		setEditorFontSize(editorFontSize + delta);
 	};
 
-	// Reset functions scoadas
+	// Monitora troca de abas para garantir que ele caiba na tela
+	// Usamos useLayoutEffect para ajustar antes do browser pintar o frame
+	useEffect(() => {
+		const adjustPosition = () => {
+			if (modalRef.current) {
+				const height = modalRef.current.offsetHeight;
+				const viewportHeight = window.innerHeight;
+				const topOffset = 80; // top-20 (5rem) aprox 80px
+				const padding = 24;   // Margem de segurança
+
+				// Cálculo do Y máximo permitido
+				// currentY + topOffset + height <= viewportHeight - padding
+				const maxY = viewportHeight - padding - topOffset - height;
+				const currentY = y.get();
+
+				if (currentY > maxY) {
+					y.set(maxY);
+				}
+			}
+		};
+
+		// Executa imediatamente
+		adjustPosition();
+
+		// E também garante no próximo frame caso haja reflow tardio
+		requestAnimationFrame(adjustPosition);
+	}, [activeTab, y]);
+
 	const resetGeneral = () => {
 		updateSettings({
 			showLineNumbers: defaultSettings.showLineNumbers,
@@ -162,6 +190,9 @@ export const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
 					/>
 
 					<motion.div
+						ref={modalRef}
+						layout // Ativa animação de suave de redimensionamento
+						style={{ y }}
 						initial={{ opacity: 0, scale: 0.96, y: -10 }}
 						animate={{ opacity: 1, scale: 1, y: 0 }}
 						exit={{ opacity: 0, scale: 0.96, y: -10 }}
@@ -172,13 +203,17 @@ export const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
 						dragMomentum={false}
 						dragElastic={0}
 						dragConstraints={constraintsRef}
-						className="fixed top-20 right-6 z-51 w-80 max-w-[calc(100vw-48px)]"
+						className="fixed top-20 right-6 z-51 w-80 max-w-[calc(100vw-48px)] select-none"
 					>
-						<div className="bg-white/98 dark:bg-zinc-900/95 backdrop-blur-xl rounded-xl shadow-2xl overflow-hidden border border-black/5 dark:border-white/10 flex flex-col max-h-[80vh]">
+						<motion.div
+							layout="position" // Previne distorção no container interno
+							className="bg-white/98 dark:bg-zinc-900/95 backdrop-blur-xl rounded-xl shadow-2xl overflow-hidden border border-black/5 dark:border-white/10 flex flex-col max-h-[80vh]"
+						>
 							{/* Header */}
-							<div
+							<motion.div
+								layout="position" // Previne distorção no header
 								onPointerDown={(e) => dragControls.start(e)}
-								className="flex items-center justify-between px-3.5 py-2.5 border-b border-black/5 dark:border-white/5 cursor-grab select-none active:cursor-grabbing"
+								className="flex items-center justify-between px-3.5 py-2.5 border-b border-black/5 dark:border-white/5 cursor-grab active:cursor-grabbing"
 							>
 								<div className="flex items-center gap-2">
 									<GripHorizontal className="w-3.5 h-3.5 text-gray-400 dark:text-gray-500" />
@@ -192,10 +227,13 @@ export const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
 								>
 									<X className="w-3.5 h-3.5" />
 								</button>
-							</div>
+							</motion.div>
 
 							{/* Tabs Navigation */}
-							<div className="flex border-b border-black/5 dark:border-white/5 bg-gray-50/50 dark:bg-zinc-800/30">
+							<motion.div
+								layout="position" // Previne distorção na navegação
+								className="flex border-b border-black/5 dark:border-white/5 bg-gray-50/50 dark:bg-zinc-800/30"
+							>
 								<button
 									onClick={() => setActiveTab('general')}
 									className={`flex-1 flex items-center justify-center gap-2 py-2 text-xs font-medium transition-colors border-none cursor-pointer ${activeTab === 'general'
@@ -216,14 +254,18 @@ export const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
 									<Type className="w-3.5 h-3.5" />
 									Texto
 								</button>
-							</div>
+							</motion.div>
 
 							{/* Content Area */}
-							<div className="p-3.5 pt-1 pb-3.5 overflow-y-auto custom-scrollbar">
+							<motion.div
+								layout="position" // Previne distorção no wrapper de conteúdo
+								className="p-3.5 pt-1 pb-3.5 overflow-y-auto custom-scrollbar"
+							>
 
 								{/* GERAL TAB */}
 								{activeTab === 'general' && (
 									<motion.div
+										key="general" // Add keys for better reconciliation
 										initial={{ opacity: 0, x: -10 }}
 										animate={{ opacity: 1, x: 0 }}
 										exit={{ opacity: 0, x: 10 }}
@@ -282,6 +324,7 @@ export const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
 								{/* DO TEXTO TAB */}
 								{activeTab === 'text' && (
 									<motion.div
+										key="text" // Add keys for better reconciliation
 										initial={{ opacity: 0, x: 10 }}
 										animate={{ opacity: 1, x: 0 }}
 										exit={{ opacity: 0, x: -10 }}
@@ -328,8 +371,8 @@ export const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
 										</div>
 									</motion.div>
 								)}
-							</div>
-						</div>
+							</motion.div>
+						</motion.div>
 					</motion.div>
 				</>
 			)}
