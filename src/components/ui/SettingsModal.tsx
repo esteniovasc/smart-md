@@ -6,214 +6,135 @@ import { SegmentedControl } from './SegmentedControl';
 import { useSettingsStore, type MarkdownViewMode } from '../../stores/useSettingsStore';
 
 interface SettingsModalProps {
-  isOpen: boolean;
-  onClose: () => void;
+	isOpen: boolean;
+	onClose: () => void;
 }
 
 interface SettingRowProps {
-  label: string;
-  children: React.ReactNode;
+	label: string;
+	children: React.ReactNode;
 }
 
 const SettingRow = ({ label, children }: SettingRowProps) => (
-  <div 
-    style={{
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      padding: '12px 0',
-      borderBottom: '1px solid rgba(0, 0, 0, 0.06)',
-      gap: '16px',
-    }}
-  >
-    <span 
-      style={{ 
-        fontSize: '14px', 
-        color: '#374151',
-        userSelect: 'text',
-        cursor: 'text',
-        flexShrink: 1,
-        minWidth: 0,
-      }}
-    >
-      {label}
-    </span>
-    <div style={{ flexShrink: 0 }}>
-      {children}
-    </div>
-  </div>
+	<div className="flex items-center justify-between py-3 border-b border-black/5 dark:border-white/5 gap-4">
+		<span className="text-sm text-gray-700 dark:text-gray-300 select-text min-w-0 flex-shrink">
+			{label}
+		</span>
+		<div className="flex-shrink-0">
+			{children}
+		</div>
+	</div>
 );
 
 const markdownViewOptions: { value: MarkdownViewMode; label: string }[] = [
-  { value: 'visible', label: 'Visível' },
-  { value: 'current-line', label: 'Na Linha' },
-  { value: 'hidden', label: 'Oculto' },
+	{ value: 'visible', label: 'Visível' },
+	{ value: 'current-line', label: 'Na Linha' },
+	{ value: 'hidden', label: 'Oculto' },
 ];
 
 /**
  * SettingsModal - Janela flutuante de configurações (draggable pelo header)
+ * Refatorado para Tailwind CSS v4
  */
 export const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
-  const dragControls = useDragControls();
-  const constraintsRef = useRef<HTMLDivElement>(null);
-  
-  const {
-    showLineNumbers,
-    markdownViewMode,
-    enableStatusColors,
-    enableHighlightActiveLine,
-    updateSettings,
-  } = useSettingsStore();
+	const dragControls = useDragControls();
+	const constraintsRef = useRef<HTMLDivElement>(null);
 
-  return (
-    <AnimatePresence>
-      {isOpen && (
-        <>
-          {/* Constraints container (tela toda) */}
-          <div 
-            ref={constraintsRef}
-            style={{
-              position: 'fixed',
-              inset: 0,
-              pointerEvents: 'none',
-              zIndex: 50,
-            }}
-          />
-          
-          <motion.div
-            initial={{ opacity: 0, scale: 0.96, y: -10 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.96, y: -10 }}
-            transition={{ type: 'spring', stiffness: 500, damping: 35 }}
-            drag
-            dragControls={dragControls}
-            dragListener={false}
-            dragMomentum={false}
-            dragElastic={0}
-            dragConstraints={constraintsRef}
-            style={{
-              position: 'fixed',
-              top: '80px',
-              right: '24px',
-              zIndex: 51,
-              width: '320px',
-              maxWidth: 'calc(100vw - 48px)',
-            }}
-          >
-            <div 
-              style={{
-                background: 'rgba(255, 255, 255, 0.98)',
-                borderRadius: '12px',
-                boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(0, 0, 0, 0.08)',
-                overflow: 'hidden',
-              }}
-            >
-              {/* Header - Drag Handle ONLY */}
-              <div 
-                onPointerDown={(e) => dragControls.start(e)}
-                style={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  justifyContent: 'space-between',
-                  padding: '10px 14px',
-                  borderBottom: '1px solid rgba(0, 0, 0, 0.06)',
-                  cursor: 'grab',
-                  userSelect: 'none',
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <GripHorizontal style={{ width: '14px', height: '14px', color: '#9ca3af' }} />
-                  <h2 style={{ 
-                    fontSize: '14px', 
-                    fontWeight: 600, 
-                    color: '#111827',
-                    margin: 0,
-                  }}>
-                    Configurações
-                  </h2>
-                </div>
-                <button
-                  onClick={onClose}
-                  style={{
-                    padding: '4px',
-                    borderRadius: '6px',
-                    border: 'none',
-                    background: 'transparent',
-                    color: '#9ca3af',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    transition: 'all 0.15s ease',
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = 'rgba(0,0,0,0.05)';
-                    e.currentTarget.style.color = '#6b7280';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = 'transparent';
-                    e.currentTarget.style.color = '#9ca3af';
-                  }}
-                >
-                  <X style={{ width: '14px', height: '14px' }} />
-                </button>
-              </div>
+	const {
+		showLineNumbers,
+		markdownViewMode,
+		enableStatusColors,
+		enableHighlightActiveLine,
+		updateSettings,
+	} = useSettingsStore();
 
-              {/* Settings List */}
-              <div style={{ padding: '4px 14px 14px' }}>
-                <SettingRow label="Números de Linha">
-                  <Switch 
-                    checked={showLineNumbers} 
-                    onChange={(v) => updateSettings({ showLineNumbers: v })} 
-                  />
-                </SettingRow>
+	return (
+		<AnimatePresence>
+			{isOpen && (
+				<>
+					{/* Constraints container (tela toda) */}
+					<div
+						ref={constraintsRef}
+						className="fixed inset-0 pointer-events-none z-50"
+					/>
 
-                <SettingRow label="Destacar Linha Ativa">
-                  <Switch 
-                    checked={enableHighlightActiveLine} 
-                    onChange={(v) => updateSettings({ enableHighlightActiveLine: v })} 
-                  />
-                </SettingRow>
+					<motion.div
+						initial={{ opacity: 0, scale: 0.96, y: -10 }}
+						animate={{ opacity: 1, scale: 1, y: 0 }}
+						exit={{ opacity: 0, scale: 0.96, y: -10 }}
+						transition={{ type: 'spring', stiffness: 500, damping: 35 }}
+						drag
+						dragControls={dragControls}
+						dragListener={false}
+						dragMomentum={false}
+						dragElastic={0}
+						dragConstraints={constraintsRef}
+						className="fixed top-20 right-6 z-51 w-80 max-w-[calc(100vw-48px)]"
+					>
+						<div className="bg-white/98 dark:bg-zinc-900/95 backdrop-blur-xl rounded-xl shadow-2xl overflow-hidden border border-black/5 dark:border-white/10">
+							{/* Header - Drag Handle ONLY */}
+							<div
+								onPointerDown={(e) => dragControls.start(e)}
+								className="flex items-center justify-between px-3.5 py-2.5 border-b border-black/5 dark:border-white/5 cursor-grab select-none active:cursor-grabbing"
+							>
+								<div className="flex items-center gap-2">
+									<GripHorizontal className="w-3.5 h-3.5 text-gray-400 dark:text-gray-500" />
+									<h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100 m-0">
+										Configurações
+									</h2>
+								</div>
+								<button
+									onClick={onClose}
+									className="p-1 rounded-md bg-transparent text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 hover:bg-black/5 dark:hover:bg-white/10 transition-colors duration-150 flex items-center justify-center border-none cursor-pointer"
+								>
+									<X className="w-3.5 h-3.5" />
+								</button>
+							</div>
 
-                <SettingRow label="Cores de Status (✅ ⚠️ 💡)">
-                  <Switch 
-                    checked={enableStatusColors} 
-                    onChange={(v) => updateSettings({ enableStatusColors: v })} 
-                  />
-                </SettingRow>
+							{/* Settings List */}
+							<div className="p-3.5 pt-1 pb-3.5">
+								<SettingRow label="Números de Linha">
+									<Switch
+										checked={showLineNumbers}
+										onChange={(v) => updateSettings({ showLineNumbers: v })}
+									/>
+								</SettingRow>
 
-                {/* Markdown View Mode - 3 estados */}
-                <div style={{ paddingTop: '12px' }}>
-                  <div style={{ 
-                    fontSize: '14px', 
-                    color: '#374151',
-                    marginBottom: '10px',
-                    userSelect: 'text',
-                    cursor: 'text',
-                  }}>
-                    Marcadores Markdown (#, *, **)
-                  </div>
-                  <SegmentedControl
-                    options={markdownViewOptions}
-                    value={markdownViewMode}
-                    onChange={(v) => updateSettings({ markdownViewMode: v })}
-                  />
-                  <div style={{
-                    fontSize: '11px',
-                    color: '#9ca3af',
-                    marginTop: '6px',
-                    lineHeight: 1.4,
-                  }}>
-                    {markdownViewMode === 'visible' && 'Sempre mostra #, *, ** no texto'}
-                    {markdownViewMode === 'current-line' && 'Mostra marcadores só na linha do cursor'}
-                    {markdownViewMode === 'hidden' && 'Oculta completamente os marcadores'}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </motion.div>
-        </>
-      )}
-    </AnimatePresence>
-  );
+								<SettingRow label="Destacar Linha Ativa">
+									<Switch
+										checked={enableHighlightActiveLine}
+										onChange={(v) => updateSettings({ enableHighlightActiveLine: v })}
+									/>
+								</SettingRow>
+
+								<SettingRow label="Cores de Status (✅ ⚠️ 💡)">
+									<Switch
+										checked={enableStatusColors}
+										onChange={(v) => updateSettings({ enableStatusColors: v })}
+									/>
+								</SettingRow>
+
+								{/* Markdown View Mode - 3 estados */}
+								<div className="pt-3">
+									<div className="text-sm text-gray-700 dark:text-gray-300 mb-2.5 select-text cursor-text">
+										Marcadores Markdown (#, *, **)
+									</div>
+									<SegmentedControl
+										options={markdownViewOptions}
+										value={markdownViewMode}
+										onChange={(v) => updateSettings({ markdownViewMode: v })}
+									/>
+									<div className="text-[11px] text-gray-400 dark:text-gray-500 mt-1.5 leading-snug">
+										{markdownViewMode === 'visible' && 'Sempre mostra #, *, ** no texto'}
+										{markdownViewMode === 'current-line' && 'Mostra marcadores só na linha do cursor'}
+										{markdownViewMode === 'hidden' && 'Oculta completamente os marcadores'}
+									</div>
+								</div>
+							</div>
+						</div>
+					</motion.div>
+				</>
+			)}
+		</AnimatePresence>
+	);
 };
