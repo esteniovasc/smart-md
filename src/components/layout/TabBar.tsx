@@ -8,13 +8,16 @@ import { useTabsStore } from '../../stores/useTabsStore';
  * TabBar - Renderiza a lista de abas a partir da store
  */
 export const TabBar = () => {
-	const { tabs, activeTabId, createTab, closeTab, setActiveTab } = useTabsStore();
+	const { tabs, activeTabId, createTab, closeTab, setActiveTab, _hasHydrated } = useTabsStore();
 
 	useEffect(() => {
+		// Só cria aba padrão se já carregou do banco (hydration) E não tem nenhuma aba
+		if (!_hasHydrated) return;
+
 		if (tabs.length === 0) {
 			createTab('Bem-vindo.md');
 		}
-	}, [tabs.length, createTab]);
+	}, [_hasHydrated, tabs.length, createTab]);
 
 	return (
 		<div className="flex items-center gap-1.5 overflow-x-auto py-1 scrollbar-hide mask-fade-right">
