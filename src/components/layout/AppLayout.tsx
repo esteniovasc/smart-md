@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { Header } from './Header';
 
 interface AppLayoutProps {
@@ -14,8 +14,8 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
     <div className="flex flex-col h-screen w-full overflow-hidden">
       <Header />
       
-      {/* Main Content - com padding-top para compensar o header fixo */}
-      <main className="flex-1 overflow-hidden pt-16">
+      {/* Main Content */}
+      <main className="flex-1 overflow-hidden p-4">
         {children}
       </main>
     </div>

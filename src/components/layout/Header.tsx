@@ -14,7 +14,7 @@ export const Header = () => {
   return (
     <GlassPanel 
       as="header" 
-      className="fixed top-0 left-0 right-0 z-50 px-4 py-3 flex items-center gap-4"
+      className="flex-shrink-0 px-4 py-3 flex items-center gap-4 rounded-none"
     >
       {/* Logo/Título */}
       <div className="flex items-center gap-3">
