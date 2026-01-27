@@ -1,9 +1,9 @@
-import { useRef } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { motion, AnimatePresence, useDragControls } from 'framer-motion';
-import { X, GripHorizontal } from 'lucide-react';
+import { X, GripHorizontal, Sliders, Type, RotateCcw, Plus, Minus, Check } from 'lucide-react';
 import { Switch } from './Switch';
 import { SegmentedControl } from './SegmentedControl';
-import { useSettingsStore, type MarkdownViewMode } from '../../stores/useSettingsStore';
+import { useSettingsStore, type MarkdownViewMode, defaultSettings } from '../../stores/useSettingsStore';
 
 interface SettingsModalProps {
 	isOpen: boolean;
@@ -33,27 +33,129 @@ const markdownViewOptions: { value: MarkdownViewMode; label: string }[] = [
 ];
 
 /**
- * SettingsModal - Janela flutuante de configurações (draggable pelo header)
- * Refatorado para Tailwind CSS v4
+ * Botão de Reset com confirmação animada
  */
+const ResetButton = ({ onConfirm, label = "Restaurar Padrões" }: { onConfirm: () => void, label?: string }) => {
+	const [status, setStatus] = useState<'idle' | 'confirming'>('idle');
+
+	const handleConfirm = () => {
+		onConfirm();
+		setStatus('idle');
+	};
+
+	return (
+		<div className="relative overflow-hidden w-full">
+			<AnimatePresence mode="wait">
+				{status === 'idle' ? (
+					<motion.button
+						key="idle"
+						initial={{ x: -20, opacity: 0 }}
+						animate={{ x: 0, opacity: 1 }}
+						exit={{ x: -20, opacity: 0 }}
+						transition={{ duration: 0.15 }}
+						onClick={() => setStatus('confirming')}
+						className="w-full flex items-center justify-center gap-2 py-2 px-4 rounded-md bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-500/20 transition-colors border-none cursor-pointer text-sm font-medium"
+					>
+						<RotateCcw className="w-3.5 h-3.5" />
+						{label}
+					</motion.button>
+				) : (
+					<motion.div
+						key="confirming"
+						initial={{ x: 20, opacity: 0 }}
+						animate={{ x: 0, opacity: 1 }}
+						exit={{ x: 20, opacity: 0 }}
+						transition={{ duration: 0.15 }}
+						className="flex items-center gap-2"
+					>
+						<span className="text-sm text-gray-600 dark:text-gray-400 font-medium whitespace-nowrap px-1">
+							Tem certeza?
+						</span>
+						<button
+							onClick={() => setStatus('idle')}
+							className="flex-1 py-2 px-3 rounded-md bg-gray-100 dark:bg-zinc-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-zinc-700 transition-colors border-none cursor-pointer text-sm"
+						>
+							Cancelar
+						</button>
+						<button
+							onClick={handleConfirm}
+							className="flex-1 py-2 px-3 rounded-md bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors border-none cursor-pointer text-sm font-medium flex items-center justify-center gap-1.5"
+						>
+							<Check className="w-3.5 h-3.5" />
+							Sim
+						</button>
+					</motion.div>
+				)}
+			</AnimatePresence>
+		</div>
+	);
+};
+
 export const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
 	const dragControls = useDragControls();
 	const constraintsRef = useRef<HTMLDivElement>(null);
+	const [activeTab, setActiveTab] = useState<'general' | 'text'>('general');
 
 	const {
 		showLineNumbers,
 		markdownViewMode,
 		enableStatusColors,
 		enableHighlightActiveLine,
+		editorFontSize,
 		restoreCursorPosition,
 		updateSettings,
+		setEditorFontSize,
 	} = useSettingsStore();
+
+	// Estado local para input de texto da fonte, permitindo valor vazio
+	const [localFontSize, setLocalFontSize] = useState(editorFontSize.toString());
+
+	// Sincroniza local quando a store muda externamente (ex: atalhos)
+	useEffect(() => {
+		setLocalFontSize(editorFontSize.toString());
+	}, [editorFontSize]);
+
+	const handleFontSizeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+		const val = e.target.value;
+		setLocalFontSize(val); // Permite digitar livremente
+
+		const numVal = parseInt(val);
+		if (!isNaN(numVal) && numVal > 0) {
+			setEditorFontSize(numVal);
+		}
+	};
+
+	const handleFontSizeBlur = () => {
+		// Se estiver vazio ou inválido ao sair, restaura o valor da store
+		const numVal = parseInt(localFontSize);
+		if (isNaN(numVal) || numVal <= 0) {
+			setLocalFontSize(editorFontSize.toString());
+		}
+	};
+
+	const adjustFontSize = (delta: number) => {
+		setEditorFontSize(editorFontSize + delta);
+	};
+
+	// Reset functions scoadas
+	const resetGeneral = () => {
+		updateSettings({
+			showLineNumbers: defaultSettings.showLineNumbers,
+			markdownViewMode: defaultSettings.markdownViewMode,
+			enableStatusColors: defaultSettings.enableStatusColors,
+			enableHighlightActiveLine: defaultSettings.enableHighlightActiveLine,
+			restoreCursorPosition: defaultSettings.restoreCursorPosition,
+		});
+	};
+
+	const resetText = () => {
+		setEditorFontSize(defaultSettings.editorFontSize);
+	};
 
 	return (
 		<AnimatePresence>
 			{isOpen && (
 				<>
-					{/* Constraints container (tela toda) */}
 					<div
 						ref={constraintsRef}
 						className="fixed inset-0 pointer-events-none z-50"
@@ -72,8 +174,8 @@ export const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
 						dragConstraints={constraintsRef}
 						className="fixed top-20 right-6 z-51 w-80 max-w-[calc(100vw-48px)]"
 					>
-						<div className="bg-white/98 dark:bg-zinc-900/95 backdrop-blur-xl rounded-xl shadow-2xl overflow-hidden border border-black/5 dark:border-white/10">
-							{/* Header - Drag Handle ONLY */}
+						<div className="bg-white/98 dark:bg-zinc-900/95 backdrop-blur-xl rounded-xl shadow-2xl overflow-hidden border border-black/5 dark:border-white/10 flex flex-col max-h-[80vh]">
+							{/* Header */}
 							<div
 								onPointerDown={(e) => dragControls.start(e)}
 								className="flex items-center justify-between px-3.5 py-2.5 border-b border-black/5 dark:border-white/5 cursor-grab select-none active:cursor-grabbing"
@@ -92,52 +194,140 @@ export const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
 								</button>
 							</div>
 
-							{/* Settings List */}
-							<div className="p-3.5 pt-1 pb-3.5">
-								<SettingRow label="Números de Linha">
-									<Switch
-										checked={showLineNumbers}
-										onChange={(v) => updateSettings({ showLineNumbers: v })}
-									/>
-								</SettingRow>
+							{/* Tabs Navigation */}
+							<div className="flex border-b border-black/5 dark:border-white/5 bg-gray-50/50 dark:bg-zinc-800/30">
+								<button
+									onClick={() => setActiveTab('general')}
+									className={`flex-1 flex items-center justify-center gap-2 py-2 text-xs font-medium transition-colors border-none cursor-pointer ${activeTab === 'general'
+										? 'text-primary-600 dark:text-primary-400 bg-white dark:bg-white/5 shadow-sm'
+										: 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
+										}`}
+								>
+									<Sliders className="w-3.5 h-3.5" />
+									Interação
+								</button>
+								<button
+									onClick={() => setActiveTab('text')}
+									className={`flex-1 flex items-center justify-center gap-2 py-2 text-xs font-medium transition-colors border-none cursor-pointer ${activeTab === 'text'
+										? 'text-primary-600 dark:text-primary-400 bg-white dark:bg-white/5 shadow-sm'
+										: 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
+										}`}
+								>
+									<Type className="w-3.5 h-3.5" />
+									Texto
+								</button>
+							</div>
 
-								<SettingRow label="Destacar Linha Ativa">
-									<Switch
-										checked={enableHighlightActiveLine}
-										onChange={(v) => updateSettings({ enableHighlightActiveLine: v })}
-									/>
-								</SettingRow>
+							{/* Content Area */}
+							<div className="p-3.5 pt-1 pb-3.5 overflow-y-auto custom-scrollbar">
 
-								<SettingRow label="Cores de Status (✅ ⚠️ 💡)">
-									<Switch
-										checked={enableStatusColors}
-										onChange={(v) => updateSettings({ enableStatusColors: v })}
-									/>
-								</SettingRow>
+								{/* GERAL TAB */}
+								{activeTab === 'general' && (
+									<motion.div
+										initial={{ opacity: 0, x: -10 }}
+										animate={{ opacity: 1, x: 0 }}
+										exit={{ opacity: 0, x: 10 }}
+										transition={{ duration: 0.2 }}
+									>
+										<SettingRow label="Números de Linha">
+											<Switch
+												checked={showLineNumbers}
+												onChange={(v) => updateSettings({ showLineNumbers: v })}
+											/>
+										</SettingRow>
 
-								<SettingRow label="Continuar digitando no histórico do ponteiro">
-									<Switch
-										checked={restoreCursorPosition}
-										onChange={(v) => updateSettings({ restoreCursorPosition: v })}
-									/>
-								</SettingRow>
+										<SettingRow label="Destacar Linha Ativa">
+											<Switch
+												checked={enableHighlightActiveLine}
+												onChange={(v) => updateSettings({ enableHighlightActiveLine: v })}
+											/>
+										</SettingRow>
 
-								{/* Markdown View Mode - 3 estados */}
-								<div className="pt-3">
-									<div className="text-sm text-gray-700 dark:text-gray-300 mb-2.5 select-text cursor-text">
-										Marcadores Markdown (#, *, **)
-									</div>
-									<SegmentedControl
-										options={markdownViewOptions}
-										value={markdownViewMode}
-										onChange={(v) => updateSettings({ markdownViewMode: v })}
-									/>
-									<div className="text-[11px] text-gray-400 dark:text-gray-500 mt-1.5 leading-snug">
-										{markdownViewMode === 'visible' && 'Sempre mostra #, *, ** no texto'}
-										{markdownViewMode === 'current-line' && 'Mostra marcadores só na linha do cursor'}
-										{markdownViewMode === 'hidden' && 'Oculta completamente os marcadores'}
-									</div>
-								</div>
+										<SettingRow label="Cores de Status (✅ ⚠️ 💡)">
+											<Switch
+												checked={enableStatusColors}
+												onChange={(v) => updateSettings({ enableStatusColors: v })}
+											/>
+										</SettingRow>
+
+										<SettingRow label="Restaurar cursor ao trocar aba">
+											<Switch
+												checked={restoreCursorPosition}
+												onChange={(v) => updateSettings({ restoreCursorPosition: v })}
+											/>
+										</SettingRow>
+
+										<div className="pt-3 border-t border-black/5 dark:border-white/5 mt-2 mb-4">
+											<div className="text-sm text-gray-700 dark:text-gray-300 mb-2.5 select-text cursor-text">
+												Marcadores Markdown
+											</div>
+											<SegmentedControl
+												options={markdownViewOptions}
+												value={markdownViewMode}
+												onChange={(v) => updateSettings({ markdownViewMode: v })}
+											/>
+											<div className="text-[11px] text-gray-400 dark:text-gray-500 mt-1.5 leading-snug">
+												{markdownViewMode === 'visible' && 'Mostra todos os símbolos'}
+												{markdownViewMode === 'current-line' && 'Oculta símbolos fora da linha ativa'}
+												{markdownViewMode === 'hidden' && 'Texto limpo, sem símbolos'}
+											</div>
+										</div>
+
+										<div className="pt-2 border-t border-black/5 dark:border-white/5">
+											<ResetButton onConfirm={resetGeneral} label="Restaurar Interação" />
+										</div>
+									</motion.div>
+								)}
+
+								{/* DO TEXTO TAB */}
+								{activeTab === 'text' && (
+									<motion.div
+										initial={{ opacity: 0, x: 10 }}
+										animate={{ opacity: 1, x: 0 }}
+										exit={{ opacity: 0, x: -10 }}
+										transition={{ duration: 0.2 }}
+									>
+										<div className="mb-6">
+											<label className="text-sm text-gray-700 dark:text-gray-300 block mb-2">
+												Tamanho da Fonte (px)
+											</label>
+											<div className="flex gap-2 h-10">
+												<input
+													type="text"
+													value={localFontSize}
+													onChange={handleFontSizeChange}
+													onBlur={handleFontSizeBlur}
+													className="flex-1 min-w-0 bg-white dark:bg-zinc-950 border border-gray-200 dark:border-zinc-800 rounded-md px-3 text-lg text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500 font-mono"
+													placeholder="ex: 14"
+												/>
+
+												<div className="flex flex-col gap-0.5 h-full w-9">
+													<button
+														onClick={() => adjustFontSize(1)}
+														className="flex-1 flex items-center justify-center rounded-t-sm rounded-bx-md bg-gray-100 dark:bg-zinc-800 hover:bg-gray-200 dark:hover:bg-zinc-700 text-gray-600 dark:text-gray-300 transition-colors border-none cursor-pointer"
+														title="Aumentar"
+													>
+														<Plus className="w-3 h-3" />
+													</button>
+													<button
+														onClick={() => adjustFontSize(-1)}
+														className="flex-1 flex items-center justify-center rounded-b-md rounded-tx-sm bg-gray-100 dark:bg-zinc-800 hover:bg-gray-200 dark:hover:bg-zinc-700 text-gray-600 dark:text-gray-300 transition-colors border-none cursor-pointer"
+														title="Diminuir"
+													>
+														<Minus className="w-3 h-3" />
+													</button>
+												</div>
+											</div>
+											<p className="text-[11px] text-gray-400 dark:text-gray-500 mt-2">
+												Atalhos do editor: <strong>Ctrl +</strong> para aumentar, <strong>Ctrl -</strong> para diminuir.
+											</p>
+										</div>
+
+										<div className="pt-2 border-t border-black/5 dark:border-white/5">
+											<ResetButton onConfirm={resetText} label="Restaurar Texto" />
+										</div>
+									</motion.div>
+								)}
 							</div>
 						</div>
 					</motion.div>

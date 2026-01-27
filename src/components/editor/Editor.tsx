@@ -1,5 +1,5 @@
 import { useMemo, useCallback, useRef, useEffect } from 'react';
-import CodeMirror, { EditorView } from '@uiw/react-codemirror';
+import CodeMirror, { EditorView, keymap } from '@uiw/react-codemirror';
 import { markdown } from '@codemirror/lang-markdown';
 import { useTabsStore } from '../../stores/useTabsStore';
 import { useSettingsStore } from '../../stores/useSettingsStore';
@@ -9,7 +9,7 @@ import { statusLinesExtension, statusLinesTheme } from './extensions/statusLines
 /**
  * Cria tema transparente para efeito Liquid Glass
  */
-const createGlassTheme = (isDark: boolean, highlightActiveLine: boolean) => {
+const createGlassTheme = (isDark: boolean, highlightActiveLine: boolean, fontSize: number) => {
 	return EditorView.theme({
 		'&': {
 			backgroundColor: 'transparent',
@@ -27,7 +27,7 @@ const createGlassTheme = (isDark: boolean, highlightActiveLine: boolean) => {
 		'.cm-content': {
 			caretColor: isDark ? '#60a5fa' : '#3b82f6',
 			fontFamily: 'ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace',
-			fontSize: '14px',
+			fontSize: `${fontSize}px`,
 			lineHeight: '1.6',
 		},
 		'.cm-line': {
@@ -89,6 +89,8 @@ export const Editor = () => {
 	const enableStatusColors = useSettingsStore((s) => s.enableStatusColors);
 	const enableHighlightActiveLine = useSettingsStore((s) => s.enableHighlightActiveLine);
 	const restoreCursorPosition = useSettingsStore((s) => s.restoreCursorPosition);
+	const editorFontSize = useSettingsStore((s) => s.editorFontSize);
+	const setEditorFontSize = useSettingsStore((s) => s.setEditorFontSize);
 
 	const tabs = useTabsStore((s) => s.tabs);
 	const activeTabId = useTabsStore((s) => s.activeTabId);
@@ -140,7 +142,7 @@ export const Editor = () => {
 	const extensions = useMemo(() => {
 		const exts = [
 			markdown(),
-			createGlassTheme(isDark, enableHighlightActiveLine),
+			createGlassTheme(isDark, enableHighlightActiveLine, editorFontSize),
 			// Listener para salvar seleção
 			EditorView.updateListener.of((update) => {
 				if (update.selectionSet && activeTabId) {
@@ -148,6 +150,35 @@ export const Editor = () => {
 					updateTabSelection(activeTabId, { anchor: selection.anchor, head: selection.head });
 				}
 			}),
+			// Atalhos de teclado para zoom
+			keymap.of([
+				{
+					key: 'Mod-=',
+					run: () => {
+						setEditorFontSize(editorFontSize + 1);
+						return true;
+					},
+					preventDefault: true,
+				},
+				{
+					key: 'Mod-+', // Shift-= geralmente
+					run: () => {
+						setEditorFontSize(editorFontSize + 1);
+						return true;
+					},
+					preventDefault: true,
+				},
+				{
+					key: 'Mod--',
+					run: () => {
+						if (editorFontSize > 6) {
+							setEditorFontSize(editorFontSize - 1);
+						}
+						return true;
+					},
+					preventDefault: true,
+				},
+			])
 		];
 
 		// Quebra de linha
@@ -166,7 +197,7 @@ export const Editor = () => {
 		}
 
 		return exts;
-	}, [isDark, enableWordWrap, markdownViewMode, enableStatusColors, enableHighlightActiveLine, activeTabId, updateTabSelection]);
+	}, [isDark, enableWordWrap, markdownViewMode, enableStatusColors, enableHighlightActiveLine, activeTabId, updateTabSelection, editorFontSize, setEditorFontSize]);
 
 	const handleChange = useCallback((value: string) => {
 		if (activeTabId) {

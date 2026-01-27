@@ -40,7 +40,7 @@ export interface SettingsState {
 	resetToDefaults: () => void;
 }
 
-const defaultSettings = {
+export const defaultSettings = {
 	theme: 'light' as const,
 	fontSize: 14,
 	fontFamily: 'system-ui, -apple-system, sans-serif',
