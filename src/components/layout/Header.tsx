@@ -1,60 +1,103 @@
 import { useState } from 'react';
 import { Sun, Moon, Settings } from 'lucide-react';
-import { GlassPanel } from '../ui/GlassPanel';
-import { GlassButton } from '../ui/GlassButton';
 import { SettingsModal } from '../ui/SettingsModal';
 import { useTheme } from '../../hooks/useTheme';
 import { TabBar } from './TabBar';
 
 /**
- * Header - Barra superior fixa com efeito vidro
- * Contém botão de toggle de tema (Sol/Lua) e configurações
+ * Header - Barra superior com efeito vidro
  */
 export const Header = () => {
   const { theme, toggleTheme } = useTheme();
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
+  const iconButtonStyle: React.CSSProperties = {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '36px',
+    height: '36px',
+    borderRadius: '8px',
+    border: 'none',
+    background: 'rgba(255, 255, 255, 0.3)',
+    color: '#475569',
+    cursor: 'pointer',
+    transition: 'all 0.15s ease',
+  };
+
   return (
     <>
-      <GlassPanel 
-        as="header" 
-        className="flex-shrink-0 px-4 py-3 flex items-center gap-4 rounded-none"
+      <header
+        style={{
+          flexShrink: 0,
+          display: 'flex',
+          alignItems: 'center',
+          gap: '16px',
+          padding: '12px 16px',
+          background: 'rgba(255, 255, 255, 0.5)',
+          backdropFilter: 'blur(16px)',
+          WebkitBackdropFilter: 'blur(16px)',
+          borderBottom: '1px solid rgba(255, 255, 255, 0.3)',
+          boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)',
+        }}
       >
         {/* Logo/Título */}
-        <div className="flex items-center gap-3">
-          <h1 className="text-xl font-semibold text-slate-800 dark:text-white whitespace-nowrap">
-            Smart MD
-          </h1>
-        </div>
+        <h1 
+          style={{ 
+            fontSize: '18px', 
+            fontWeight: 600, 
+            color: '#1e293b',
+            margin: 0,
+            whiteSpace: 'nowrap',
+          }}
+        >
+          Smart MD
+        </h1>
 
         {/* Tab Bar ocupando espaço central */}
-        <div className="flex-1 min-w-0">
+        <div style={{ flex: 1, minWidth: 0 }}>
           <TabBar />
         </div>
 
         {/* Actions */}
-        <div className="flex items-center gap-2">
-          <GlassButton
-            variant="icon"
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <button
             onClick={() => setIsSettingsOpen(true)}
             title="Configurações"
+            style={iconButtonStyle}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.5)';
+              e.currentTarget.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.1)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.3)';
+              e.currentTarget.style.boxShadow = 'none';
+            }}
           >
-            <Settings className="w-5 h-5" />
-          </GlassButton>
+            <Settings style={{ width: '20px', height: '20px' }} />
+          </button>
 
-          <GlassButton
-            variant="icon"
+          <button
             onClick={toggleTheme}
             title={theme === 'light' ? 'Ativar modo escuro' : 'Ativar modo claro'}
+            style={iconButtonStyle}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.5)';
+              e.currentTarget.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.1)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.3)';
+              e.currentTarget.style.boxShadow = 'none';
+            }}
           >
             {theme === 'light' ? (
-              <Moon className="w-5 h-5" />
+              <Moon style={{ width: '20px', height: '20px' }} />
             ) : (
-              <Sun className="w-5 h-5" />
+              <Sun style={{ width: '20px', height: '20px' }} />
             )}
-          </GlassButton>
+          </button>
         </div>
-      </GlassPanel>
+      </header>
 
       <SettingsModal 
         isOpen={isSettingsOpen} 

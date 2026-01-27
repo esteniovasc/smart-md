@@ -6,7 +6,6 @@ import { useTabsStore } from '../../stores/useTabsStore';
 
 /**
  * TabBar - Renderiza a lista de abas a partir da store
- * Inclui fallback para criar a primeira aba "Bem-vindo.md" se estiver vazio
  */
 export const TabBar = () => {
   const { tabs, activeTabId, createTab, closeTab, setActiveTab } = useTabsStore();
@@ -18,7 +17,15 @@ export const TabBar = () => {
   }, [tabs.length, createTab]);
 
   return (
-    <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-hide py-1">
+    <div 
+      style={{ 
+        display: 'flex', 
+        alignItems: 'center', 
+        gap: '6px',
+        overflowX: 'auto',
+        padding: '4px 0',
+      }}
+    >
       <AnimatePresence mode="popLayout">
         {tabs.map((tab) => (
           <Tab
@@ -32,18 +39,35 @@ export const TabBar = () => {
         ))}
       </AnimatePresence>
 
-      {/* Botão nova aba - minimalista */}
+      {/* Botão nova aba */}
       <button
         type="button"
         onClick={() => createTab('Sem título')}
         title="Nova aba"
-        className="flex-shrink-0 flex items-center justify-center w-7 h-7 rounded-md
-                   text-slate-400 dark:text-gray-500
-                   hover:text-slate-600 dark:hover:text-gray-300
-                   hover:bg-white/30 dark:hover:bg-white/10
-                   transition-colors duration-150"
+        style={{
+          flexShrink: 0,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          width: '28px',
+          height: '28px',
+          borderRadius: '6px',
+          border: 'none',
+          background: 'transparent',
+          color: '#94a3b8',
+          cursor: 'pointer',
+          transition: 'all 0.15s ease',
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.background = 'rgba(255, 255, 255, 0.4)';
+          e.currentTarget.style.color = '#64748b';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.background = 'transparent';
+          e.currentTarget.style.color = '#94a3b8';
+        }}
       >
-        <Plus className="w-4 h-4" strokeWidth={2} />
+        <Plus style={{ width: '16px', height: '16px' }} strokeWidth={2} />
       </button>
     </div>
   );
