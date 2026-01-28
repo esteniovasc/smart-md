@@ -192,10 +192,11 @@ body.dark {
 		color: transparent;
 	}
 
-	/* Custom Scrollbar - Only visible on hover/active */
+	/* Custom Scrollbar - Final Adjustment */
 	.custom-scrollbar::-webkit-scrollbar {
-		width: 6px;
-		height: 6px;
+		width: 8px;
+		/* Mais largo para melhor clique */
+		height: 8px;
 	}
 
 	.custom-scrollbar::-webkit-scrollbar-track {
@@ -203,27 +204,35 @@ body.dark {
 	}
 
 	.custom-scrollbar::-webkit-scrollbar-thumb {
-		background: rgba(0, 0, 0, 0);
-		/* Invisível por padrão */
-		border-radius: 99px;
-		transition: background 0.2s ease;
+		background-color: transparent;
+		border-radius: 4px;
+
+		/* Animação simplificada */
+		transition: background-color 0.5s ease;
+		transition-delay: 2s;
+		/* Delay fake via CSS (suporte limitado por browser) */
 	}
 
-	.custom-scrollbar:hover::-webkit-scrollbar-thumb {
-		background: rgba(0, 0, 0, 0.1);
-		/* Visível leve no hover */
+	/* Show on Wrapper Hover (Group) */
+	.group:hover .custom-scrollbar::-webkit-scrollbar-thumb {
+		background-color: rgba(0, 0, 0, 0.25);
+		/* Mais visível */
+		transition-duration: 0.2s;
+		transition-delay: 0s;
 	}
 
-	.custom-scrollbar::-webkit-scrollbar-thumb:hover {
-		background: rgba(0, 0, 0, 0.3);
-		/* Mais forte ao interagir */
+	.group:hover .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+		background-color: rgba(0, 0, 0, 0.5);
+		/* Escuro e claro no hover */
+		cursor: pointer;
 	}
 
-	.dark .custom-scrollbar:hover::-webkit-scrollbar-thumb {
-		background: rgba(255, 255, 255, 0.1);
+	/* Dark Mode Variants */
+	.dark .group:hover .custom-scrollbar::-webkit-scrollbar-thumb {
+		background-color: rgba(255, 255, 255, 0.25);
 	}
 
-	.dark .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-		background: rgba(255, 255, 255, 0.3);
+	.dark .group:hover .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+		background-color: rgba(255, 255, 255, 0.5);
 	}
 }

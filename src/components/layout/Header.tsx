@@ -67,7 +67,7 @@ export const Header = () => {
 
 				{/* 2. Tabs Island: Documentos Ativos */}
 				{/* Flex-1 para ocupar o espaço central, overflow-hidden para conter a TabBar */}
-				<div className="glass-panel rounded-2xl h-14 flex items-center p-2 pointer-events-auto border border-white/20 dark:border-white/10 flex-1 min-w-0 max-w-4xl mx-auto overflow-hidden relative">
+				<div className="group glass-panel rounded-2xl h-14 flex items-center p-2 pointer-events-auto border border-white/20 dark:border-white/10 flex-1 min-w-0 max-w-4xl mx-auto overflow-hidden relative">
 					<div className="flex-1 overflow-hidden min-w-0 h-full">
 						<TabBar />
 					</div>

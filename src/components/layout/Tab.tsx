@@ -24,7 +24,7 @@ export const Tab = ({ title, isActive, isDirty, onClick, onClose }: TabProps) =>
 			onClick={onClick}
 			className={`
         relative flex items-center gap-2 h-8 px-3 rounded-lg cursor-pointer select-none
-        transition-all duration-150 max-w-[180px] min-w-[80px]
+        transition-all duration-150 max-w-[180px] min-w-[120px] shrink-0
         ${isActive
 					? 'bg-white/70 dark:bg-white/10 shadow-sm border-none'
 					: 'bg-white/25 dark:bg-white/5 hover:bg-white/45 dark:hover:bg-white/10 border border-transparent'}

@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { Plus } from 'lucide-react';
 import { AnimatePresence } from 'framer-motion';
 import { Tab } from './Tab';
@@ -19,20 +19,56 @@ export const TabBar = () => {
 		}
 	}, [_hasHydrated, tabs.length, createTab]);
 
+	const tabsRef = useRef<Map<string, HTMLDivElement>>(null);
+
+	// Inicializa o Map de refs uma única vez
+	function getMap() {
+		if (!tabsRef.current) {
+			tabsRef.current = new Map();
+		}
+		return tabsRef.current;
+	}
+
+	useEffect(() => {
+		// Auto-scroll para a aba ativa
+		if (activeTabId) {
+			const map = getMap();
+			const node = map.get(activeTabId);
+			if (node) {
+				node.scrollIntoView({
+					behavior: 'smooth',
+					block: 'nearest',
+					inline: 'center'
+				});
+			}
+		}
+	}, [activeTabId]);
+
 	return (
 		<div className="flex items-center w-full h-full gap-2">
 			{/* Lista de Abas com Scroll */}
 			<div className="flex-1 overflow-x-auto flex items-center gap-1.5 custom-scrollbar py-1 px-1 mask-fade-right">
 				<AnimatePresence mode="popLayout">
 					{tabs.map((tab) => (
-						<Tab
+						<div
 							key={tab.id}
-							title={tab.title}
-							isActive={activeTabId === tab.id}
-							isDirty={tab.isModified}
-							onClick={() => setActiveTab(tab.id)}
-							onClose={() => closeTab(tab.id)}
-						/>
+							ref={(node) => {
+								const map = getMap();
+								if (node) {
+									map.set(tab.id, node);
+								} else {
+									map.delete(tab.id);
+								}
+							}}
+						>
+							<Tab
+								title={tab.title}
+								isActive={activeTabId === tab.id}
+								isDirty={tab.isModified}
+								onClick={() => setActiveTab(tab.id)}
+								onClose={() => closeTab(tab.id)}
+							/>
+						</div>
 					))}
 				</AnimatePresence>
 			</div>
