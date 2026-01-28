@@ -164,6 +164,11 @@ body.dark {
 	overflow: hidden;
 }
 
+/* Custom Editor Background Override (Variable set by useBackground hook) */
+.cm-editor {
+	background-color: var(--editor-bg-override) !important;
+}
+
 @layer components {
 
 	/* Glass Panel - Adaptável Light/Dark */

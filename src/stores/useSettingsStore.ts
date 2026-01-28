@@ -47,6 +47,12 @@ export interface SettingsState {
 		grabbing: boolean;
 	};
 
+	// Background
+	appBackgroundColor: string; // Global App Background
+	editorBackgroundColor: string; // Editor Specific Background
+	enableDynamicBackground: boolean;
+	spotlightRadius: number; // Radius in pixels
+
 	// Actions
 	setTheme: (theme: 'dark' | 'light') => void;
 	setFontSize: (size: number) => void;
@@ -65,6 +71,13 @@ export interface SettingsState {
 	setCursorHotspot: (type: 'default' | 'pointer' | 'text' | 'grab' | 'grabbing', x: number, y: number) => void;
 	setCursorEnabled: (type: 'default' | 'pointer' | 'text' | 'grab' | 'grabbing', enabled: boolean) => void;
 	resetCursors: () => void;
+
+	// Background Actions
+	setAppBackgroundColor: (color: string) => void;
+	setEditorBackgroundColor: (color: string) => void;
+	setEnableDynamicBackground: (enabled: boolean) => void;
+	setSpotlightRadius: (radius: number) => void;
+
 	updateSettings: (partial: Partial<SettingsState>) => void;
 	resetToDefaults: () => void;
 }
@@ -114,6 +127,12 @@ export const defaultSettings = {
 	cursors: defaultCursors,
 	hotspots: defaultHotspots,
 	enabledCursors: defaultEnabledCursors,
+
+	// Background Defaults
+	appBackgroundColor: '', // Global
+	editorBackgroundColor: '', // Editor
+	enableDynamicBackground: true,
+	spotlightRadius: 600,
 };
 
 export const useSettingsStore = create<SettingsState>()(
@@ -153,6 +172,11 @@ export const useSettingsStore = create<SettingsState>()(
 				}
 			})),
 
+			setAppBackgroundColor: (color) => set({ appBackgroundColor: color }),
+			setEditorBackgroundColor: (color) => set({ editorBackgroundColor: color }),
+			setEnableDynamicBackground: (enabled) => set({ enableDynamicBackground: enabled }),
+			setSpotlightRadius: (radius) => set({ spotlightRadius: radius }),
+
 			resetCursors: () => set({
 				cursors: defaultCursors,
 				hotspots: defaultHotspots,
@@ -165,7 +189,7 @@ export const useSettingsStore = create<SettingsState>()(
 		}),
 		{
 			name: 'smart-md-settings',
-			version: 5, // Incremented version for migration
+			version: 7, // Incremented version for migration
 		}
 	)
 );

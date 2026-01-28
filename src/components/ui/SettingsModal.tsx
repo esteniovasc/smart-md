@@ -1,9 +1,136 @@
 import { useRef, useState, useEffect } from 'react';
 import { motion, AnimatePresence, useDragControls, useMotionValue } from 'framer-motion';
-import { X, GripHorizontal, Sliders, Type, RotateCcw, Plus, Minus, Check, MousePointer2, Upload, ChevronDown } from 'lucide-react';
+import { X, GripHorizontal, Sliders, Type, RotateCcw, Plus, Minus, Check, MousePointer2, Upload, ChevronDown, Palette, Zap } from 'lucide-react';
 import { Switch } from './Switch';
 import { SegmentedControl } from './SegmentedControl';
 import { useSettingsStore, type MarkdownViewMode, defaultSettings } from '../../stores/useSettingsStore';
+
+// Helper para converter Hex/Hex8 para { color, alpha }
+const parseColor = (hex: string) => {
+	if (!hex) return { color: '#ffffff', alpha: 100 };
+
+	// Remove #
+	hex = hex.replace('#', '');
+
+	// Se for curto (FFF), expandir
+	if (hex.length === 3) {
+		hex = hex.split('').map(c => c + c).join('');
+	}
+
+	// Se tiver alpha (8 chars)
+	let alpha = 100;
+	if (hex.length === 8) {
+		const alphaHex = hex.substring(6, 8);
+		alpha = Math.round((parseInt(alphaHex, 16) / 255) * 100);
+		hex = hex.substring(0, 6);
+	}
+
+	return { color: '#' + hex, alpha };
+};
+
+// Helper para criar Hex8
+const createHexColor = (color: string, alpha: number) => {
+	const a = Math.round((alpha / 100) * 255);
+	const alphaHex = a.toString(16).padStart(2, '0');
+	return `${color}${alphaHex}`;
+};
+
+const ColorPickerWithAlpha = ({
+	label,
+	description,
+	value,
+	onChange,
+	placeholder = "Padrão"
+}: {
+	label: string,
+	description: string,
+	value: string,
+	onChange: (val: string) => void,
+	placeholder?: string
+}) => {
+	const { color, alpha } = parseColor(value);
+
+	const handleColorChange = (newColor: string) => {
+		if (value && value.length > 7) {
+			// Mantém alpha existente
+			onChange(createHexColor(newColor, alpha));
+		} else {
+			// Assume 100% se não tinha alpha
+			onChange(newColor);
+		}
+	};
+
+	const handleAlphaChange = (newAlpha: number) => {
+		onChange(createHexColor(color, newAlpha));
+	};
+
+	return (
+		<div className="space-y-3 p-3 bg-gray-50 dark:bg-zinc-900 rounded-lg border border-gray-100 dark:border-zinc-800">
+			<div className="space-y-0.5">
+				<label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+					{label}
+				</label>
+				<p className="text-xs text-gray-500 dark:text-gray-400">
+					{description}
+				</p>
+			</div>
+
+			<div className="space-y-3">
+				{/* Row 1: Color Picker & Value */}
+				<div className="flex items-center gap-3">
+					<div className="relative w-10 h-10 rounded-lg overflow-hidden border border-gray-200 dark:border-zinc-700 shadow-sm flex-shrink-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4IiBoZWlnaHQ9IjgiPjxyZWN0IHdpZHRoPSI4IiBoZWlnaHQ9IjgiIGZpbGw9IiNmZmYiLz48cGF0aCBkPSJNMCAwaDR2LTRoLTR6bTQgNGg0djRoLTR6IiBmaWxsPSIjY2NjIiBmaWxsLW9wYWNpdHk9IjAuNCIvPjwvc3ZnPg==')]">
+						<div
+							className="absolute inset-0"
+							style={{ backgroundColor: value || 'transparent' }}
+						/>
+						<input
+							type="color"
+							value={color}
+							onChange={(e) => handleColorChange(e.target.value)}
+							className="absolute inset-0 w-[150%] h-[150%] -top-[25%] -left-[25%] opacity-0 cursor-pointer"
+						/>
+					</div>
+					<div className="flex-1">
+						<input
+							type="text"
+							value={value}
+							onChange={(e) => onChange(e.target.value)}
+							className="w-full bg-white dark:bg-zinc-950 border border-gray-200 dark:border-zinc-800 rounded-md px-3 py-2 text-sm font-mono text-gray-600 dark:text-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 uppercase"
+							placeholder={placeholder}
+						/>
+					</div>
+					{value && (
+						<button
+							onClick={() => onChange('')}
+							className="p-2 text-gray-500 hover:text-red-500 transition-colors"
+							title="Restaurar padrão"
+						>
+							<RotateCcw className="w-4 h-4" />
+						</button>
+					)}
+				</div>
+
+				{/* Row 2: Opacity Slider */}
+				{value && (
+					<div className="flex items-center gap-3 pt-1">
+						<span className="text-xs text-gray-500 font-medium w-12">Opacidade</span>
+						<input
+							type="range"
+							min="0"
+							max="100"
+							value={alpha}
+							onChange={(e) => handleAlphaChange(parseInt(e.target.value))}
+							className="flex-1 h-1.5 bg-gray-200 dark:bg-zinc-700 rounded-full appearance-none cursor-pointer accent-primary-500"
+						/>
+						<span className="text-xs text-gray-600 dark:text-gray-400 w-8 text-right font-mono">
+							{alpha}%
+						</span>
+					</div>
+				)}
+			</div>
+		</div>
+	);
+};
 
 interface SettingsModalProps {
 	isOpen: boolean;
@@ -95,7 +222,7 @@ export const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
 	const dragControls = useDragControls();
 	const constraintsRef = useRef<HTMLDivElement>(null);
 	const modalRef = useRef<HTMLDivElement>(null);
-	const [activeTab, setActiveTab] = useState<'general' | 'text' | 'cursors'>('general');
+	const [activeTab, setActiveTab] = useState<'general' | 'editor' | 'appearance' | 'cursors'>('general');
 
 	// Motion value para controlar a posição Y manualmente
 	const y = useMotionValue(0);
@@ -111,12 +238,24 @@ export const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
 		hotspots,
 		enabledCursors,
 		enableCustomCursors,
+		// Background
+		appBackgroundColor,
+		editorBackgroundColor,
+		enableDynamicBackground,
+		spotlightRadius,
+
 		updateSettings,
 		setEditorFontSize,
 		setCursorPath,
 		setCursorHotspot,
 		setCursorEnabled,
 		setEnableCustomCursors,
+		// Background Actions
+		setAppBackgroundColor,
+		setEditorBackgroundColor,
+		setEnableDynamicBackground,
+		setSpotlightRadius,
+
 		resetCursors,
 	} = useSettingsStore();
 
@@ -212,7 +351,7 @@ export const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
 						dragMomentum={false}
 						dragElastic={0}
 						dragConstraints={constraintsRef}
-						className="fixed top-20 right-6 z-51 w-80 max-w-[calc(100vw-48px)] select-none"
+						className="fixed top-20 right-6 z-51 w-96 max-w-[calc(100vw-48px)] select-none"
 					>
 						<motion.div
 							layout="position" // Previne distorção no container interno
@@ -241,33 +380,61 @@ export const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
 							{/* Tabs Navigation */}
 							<motion.div
 								layout="position" // Previne distorção na navegação
-								className="flex border-b border-black/5 dark:border-white/5 bg-gray-50/50 dark:bg-zinc-800/30"
+								className="flex items-center gap-6 px-6 border-b border-black/5 dark:border-white/5 bg-gray-50/50 dark:bg-zinc-800/30"
 							>
 								<button
 									onClick={() => setActiveTab('general')}
-									className={`flex-1 flex items-center justify-center gap-2 py-2 text-xs font-medium transition-colors border-none cursor-pointer ${activeTab === 'general'
-										? 'text-primary-600 dark:text-primary-400 bg-white dark:bg-white/5 shadow-sm'
-										: 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
+									className={`pb-2 text-sm font-medium transition-colors relative flex items-center gap-2 ${activeTab === 'general'
+										? 'text-primary-600 dark:text-primary-400'
+										: 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
 										}`}
 								>
-									<Sliders className="w-3.5 h-3.5" />
+									<Sliders className="w-4 h-4" />
 									Geral
+									{activeTab === 'general' && (
+										<motion.div
+											layoutId="activeTab"
+											className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary-600 dark:bg-primary-400 rounded-full"
+										/>
+									)}
 								</button>
 								<button
-									onClick={() => setActiveTab('text')}
-									className={`flex-1 flex items-center justify-center gap-2 py-2 text-xs font-medium transition-colors border-none cursor-pointer ${activeTab === 'text'
-										? 'text-primary-600 dark:text-primary-400 bg-white dark:bg-white/5 shadow-sm'
-										: 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
+									onClick={() => setActiveTab('editor')}
+									className={`pb-2 text-sm font-medium transition-colors relative flex items-center gap-2 ${activeTab === 'editor'
+										? 'text-primary-600 dark:text-primary-400'
+										: 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
 										}`}
 								>
-									<Type className="w-3.5 h-3.5" />
-									Texto
+									<Type className="w-4 h-4" />
+									Editor
+									{activeTab === 'editor' && (
+										<motion.div
+											layoutId="activeTab"
+											className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary-600 dark:bg-primary-400 rounded-full"
+										/>
+									)}
+								</button>
+								<button
+									onClick={() => setActiveTab('appearance')}
+									className={`pb-2 text-sm font-medium transition-colors relative flex items-center gap-2 ${activeTab === 'appearance'
+										? 'text-primary-600 dark:text-primary-400'
+										: 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
+										}`}
+								>
+									<Palette className="w-4 h-4" />
+									Aparência
+									{activeTab === 'appearance' && (
+										<motion.div
+											layoutId="activeTab"
+											className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary-600 dark:bg-primary-400 rounded-full"
+										/>
+									)}
 								</button>
 								<button
 									onClick={() => setActiveTab('cursors')}
-									className={`flex-1 flex items-center justify-center gap-2 py-2 text-xs font-medium transition-colors border-none cursor-pointer ${activeTab === 'cursors'
-										? 'text-primary-600 dark:text-primary-400 bg-white dark:bg-white/5 shadow-sm'
-										: 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
+									className={`pb-2 text-sm font-medium transition-colors relative ${activeTab === 'cursors'
+										? 'text-primary-600 dark:text-primary-400'
+										: 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
 										}`}
 								>
 									<MousePointer2 className="w-3.5 h-3.5" />
@@ -340,10 +507,10 @@ export const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
 									</motion.div>
 								)}
 
-								{/* DO TEXTO TAB */}
-								{activeTab === 'text' && (
+								{/* DO EDITOR TAB */}
+								{activeTab === 'editor' && (
 									<motion.div
-										key="text" // Add keys for better reconciliation
+										key="editor" // Add keys for better reconciliation
 										initial={{ opacity: 0, x: 10 }}
 										animate={{ opacity: 1, x: 0 }}
 										exit={{ opacity: 0, x: -10 }}
@@ -387,6 +554,92 @@ export const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
 
 										<div className="pt-2 border-t border-black/5 dark:border-white/5">
 											<ResetButton onConfirm={resetText} label="Restaurar Texto" />
+										</div>
+									</motion.div>
+								)}
+
+								{/* APPEARANCE TAB */}
+								{activeTab === 'appearance' && (
+									<motion.div
+										key="appearance"
+										initial={{ opacity: 0, x: 10 }}
+										animate={{ opacity: 1, x: 0 }}
+										exit={{ opacity: 0, x: -10 }}
+										transition={{ duration: 0.2 }}
+										className="space-y-6"
+									>
+										<div className="space-y-4">
+											<h3 className="text-sm font-medium text-gray-900 dark:text-gray-100 flex items-center gap-2">
+												<Zap className="w-4 h-4 text-primary-500" />
+												Efeitos Visuais
+											</h3>
+
+											<div className="space-y-3 p-3 bg-gray-50 dark:bg-zinc-900 rounded-lg border border-gray-100 dark:border-zinc-800">
+												<div className="flex items-center justify-between">
+													<div className="space-y-0.5">
+														<label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+															Fundo Dinâmico (Spotlight)
+														</label>
+														<p className="text-xs text-gray-500 dark:text-gray-400">
+															Efeito de iluminação que segue o mouse
+														</p>
+													</div>
+													<Switch
+														checked={enableDynamicBackground}
+														onChange={setEnableDynamicBackground}
+													/>
+												</div>
+
+												{/* Spotlight Radius Slider */}
+												<div className={`pt-3 border-t border-gray-200 dark:border-zinc-700/50 transition-opacity duration-200 ${!enableDynamicBackground ? 'opacity-50 pointer-events-none' : ''}`}>
+													<div className="flex justify-between mb-2">
+														<label className="text-xs font-medium text-gray-700 dark:text-gray-300">
+															Raio de Dispersão
+														</label>
+														<span className="text-xs text-gray-500 font-mono">
+															{spotlightRadius}px
+														</span>
+													</div>
+													<input
+														type="range"
+														min="200"
+														max="1200"
+														step="50"
+														value={spotlightRadius || 600}
+														onChange={(e) => setSpotlightRadius(parseInt(e.target.value))}
+														className="w-full h-1.5 bg-gray-200 dark:bg-zinc-700 rounded-full appearance-none cursor-pointer accent-primary-500"
+													/>
+													<div className="flex justify-between mt-1 text-[10px] text-gray-400">
+														<span>Focado</span>
+														<span>Disperso</span>
+													</div>
+												</div>
+											</div>
+										</div>
+
+										<div className="space-y-4">
+											<h3 className="text-sm font-medium text-gray-900 dark:text-gray-100 flex items-center gap-2">
+												<Palette className="w-4 h-4 text-primary-500" />
+												Personalização
+											</h3>
+
+											{/* App Background */}
+											<ColorPickerWithAlpha
+												label="Cor de Fundo do App (Global)"
+												description="Fundo da janela principal"
+												value={appBackgroundColor}
+												onChange={setAppBackgroundColor}
+												placeholder="Padrão do Tema"
+											/>
+
+											{/* Editor Background */}
+											<ColorPickerWithAlpha
+												label="Cor de Fundo do Editor"
+												description="Apenas a área de texto"
+												value={editorBackgroundColor}
+												onChange={setEditorBackgroundColor}
+												placeholder="Transparente / Padrão"
+											/>
 										</div>
 									</motion.div>
 								)}
