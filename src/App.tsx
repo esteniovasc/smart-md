@@ -7,10 +7,17 @@ import { Editor } from './components/editor/Editor';
  * Smart MD - Editor de Markdown PWA
  * Componente principal da aplicação
  */
+import { usePageTitle } from './hooks/usePageTitle';
+
+/**
+ * Smart MD - Editor de Markdown PWA
+ * Componente principal da aplicação
+ */
 export default function App() {
 	// Inicializar hook de tema (aplica classe dark ao body)
 	useTheme();
 	useCursors();
+	usePageTitle();
 
 	return (
 		<AppLayout>
