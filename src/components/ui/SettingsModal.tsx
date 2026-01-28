@@ -1,6 +1,6 @@
 import { useRef, useState, useEffect } from 'react';
 import { motion, AnimatePresence, useDragControls, useMotionValue } from 'framer-motion';
-import { X, GripHorizontal, Sliders, Type, RotateCcw, Plus, Minus, Check } from 'lucide-react';
+import { X, GripHorizontal, Sliders, Type, RotateCcw, Plus, Minus, Check, MousePointer2, Upload, ChevronDown } from 'lucide-react';
 import { Switch } from './Switch';
 import { SegmentedControl } from './SegmentedControl';
 import { useSettingsStore, type MarkdownViewMode, defaultSettings } from '../../stores/useSettingsStore';
@@ -95,7 +95,7 @@ export const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
 	const dragControls = useDragControls();
 	const constraintsRef = useRef<HTMLDivElement>(null);
 	const modalRef = useRef<HTMLDivElement>(null);
-	const [activeTab, setActiveTab] = useState<'general' | 'text'>('general');
+	const [activeTab, setActiveTab] = useState<'general' | 'text' | 'cursors'>('general');
 
 	// Motion value para controlar a posição Y manualmente
 	const y = useMotionValue(0);
@@ -107,8 +107,17 @@ export const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
 		enableHighlightActiveLine,
 		editorFontSize,
 		restoreCursorPosition,
+		cursors,
+		hotspots,
+		enabledCursors,
+		enableCustomCursors,
 		updateSettings,
 		setEditorFontSize,
+		setCursorPath,
+		setCursorHotspot,
+		setCursorEnabled,
+		setEnableCustomCursors,
+		resetCursors,
 	} = useSettingsStore();
 
 	const [localFontSize, setLocalFontSize] = useState(editorFontSize.toString());
@@ -242,7 +251,7 @@ export const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
 										}`}
 								>
 									<Sliders className="w-3.5 h-3.5" />
-									Interação
+									Geral
 								</button>
 								<button
 									onClick={() => setActiveTab('text')}
@@ -253,6 +262,16 @@ export const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
 								>
 									<Type className="w-3.5 h-3.5" />
 									Texto
+								</button>
+								<button
+									onClick={() => setActiveTab('cursors')}
+									className={`flex-1 flex items-center justify-center gap-2 py-2 text-xs font-medium transition-colors border-none cursor-pointer ${activeTab === 'cursors'
+										? 'text-primary-600 dark:text-primary-400 bg-white dark:bg-white/5 shadow-sm'
+										: 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
+										}`}
+								>
+									<MousePointer2 className="w-3.5 h-3.5" />
+									Cursores
 								</button>
 							</motion.div>
 
@@ -368,6 +387,120 @@ export const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
 
 										<div className="pt-2 border-t border-black/5 dark:border-white/5">
 											<ResetButton onConfirm={resetText} label="Restaurar Texto" />
+										</div>
+									</motion.div>
+								)}
+
+								{/* CURSORES TAB */}
+								{activeTab === 'cursors' && (
+									<motion.div
+										key="cursors"
+										initial={{ opacity: 0, x: 10 }}
+										animate={{ opacity: 1, x: 0 }}
+										exit={{ opacity: 0, x: -10 }}
+										transition={{ duration: 0.2 }}
+										className="space-y-4"
+									>
+										{/* Master Switch */}
+										<div className="flex items-center justify-between py-2 mb-4 border-b border-black/5 dark:border-white/5">
+											<label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+												Habilitar Cursores Personalizados
+											</label>
+											<Switch
+												checked={enableCustomCursors}
+												onChange={setEnableCustomCursors}
+											/>
+										</div>
+
+										<div className={`space-y-4 transition-opacity duration-200 ${!enableCustomCursors ? 'opacity-50 pointer-events-none grayscale' : ''}`}>
+											{[
+												{ id: 'default', label: 'Padrão' },
+												{ id: 'pointer', label: 'Pointer (Link)' },
+												{ id: 'text', label: 'Texto' },
+												{ id: 'grab', label: 'Mover (Grab)' },
+												{ id: 'grabbing', label: 'Movendo (Grabbing)' }
+											].map((cursor) => (
+												<div key={cursor.id} className="space-y-2 pb-2 border-b border-black/5 dark:border-white/5 last:border-0">
+													<div className="flex items-center justify-between">
+														<div className="flex items-center gap-3">
+															{/* Individual Toggle */}
+															<Switch
+																checked={enabledCursors[cursor.id as keyof typeof enabledCursors]}
+																onChange={(val) => setCursorEnabled(cursor.id as any, val)}
+																disabled={!enableCustomCursors}
+															/>
+
+															{/* Preview Icon */}
+															<div className="w-8 h-8 rounded bg-gray-100 dark:bg-white/5 flex items-center justify-center overflow-hidden border border-black/5 dark:border-white/5">
+																<img
+																	src={cursors[cursor.id as keyof typeof cursors]}
+																	className="w-5 h-5 object-contain"
+																	alt={`Cursor ${cursor.label}`}
+																/>
+															</div>
+
+															<label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+																{cursor.label}
+															</label>
+														</div>
+
+														{/* Upload Button */}
+														<label className={`flex items-center justify-center w-8 h-8 rounded-md bg-gray-100 dark:bg-zinc-800 hover:bg-gray-200 dark:hover:bg-zinc-700 cursor-pointer transition-colors border-none text-gray-600 dark:text-gray-300 ${!enabledCursors[cursor.id as keyof typeof enabledCursors] ? 'opacity-50 pointer-events-none' : ''}`} title="Alterar ícone">
+															<input
+																type="file"
+																className="hidden"
+																accept=".svg,.png,.jpg,.jpeg,.ico"
+																onChange={(e) => {
+																	const file = e.target.files?.[0];
+																	if (file) {
+																		const reader = new FileReader();
+																		reader.onloadend = () => {
+																			const base64String = reader.result as string;
+																			setCursorPath(cursor.id as any, base64String);
+																		};
+																		reader.readAsDataURL(file);
+																	}
+																}}
+															/>
+															<Upload className="w-4 h-4" />
+														</label>
+													</div>
+
+													{/* Hotspot Tuning (Dropdown) */}
+													{enabledCursors[cursor.id as keyof typeof enabledCursors] && (
+														<details className="group/hotspot pl-[52px]">
+															<summary className="flex items-center gap-1 text-[10px] text-gray-400 dark:text-gray-500 cursor-pointer select-none hover:text-gray-600 dark:hover:text-gray-300 transition-colors w-fit list-none">
+																<ChevronDown className="w-3 h-3 transition-transform group-open/hotspot:rotate-180" />
+																Ajuste de Clique (Hotspot)
+															</summary>
+															<div className="flex gap-4 p-2 mt-1 rounded bg-gray-50 dark:bg-zinc-800/50 border border-black/5 dark:border-white/5 w-fit">
+																<div className="flex items-center gap-2">
+																	<span className="text-[10px] font-mono text-gray-500">X:</span>
+																	<input
+																		type="number"
+																		value={hotspots[cursor.id as keyof typeof hotspots]?.x ?? 0}
+																		onChange={(e) => setCursorHotspot(cursor.id as any, parseInt(e.target.value) || 0, hotspots[cursor.id as keyof typeof hotspots]?.y || 0)}
+																		className="w-10 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 rounded px-1.5 py-0.5 text-xs font-mono focus:outline-none focus:border-primary-500 text-center"
+																	/>
+																</div>
+																<div className="flex items-center gap-2">
+																	<span className="text-[10px] font-mono text-gray-500">Y:</span>
+																	<input
+																		type="number"
+																		value={hotspots[cursor.id as keyof typeof hotspots]?.y ?? 0}
+																		onChange={(e) => setCursorHotspot(cursor.id as any, hotspots[cursor.id as keyof typeof hotspots]?.x || 0, parseInt(e.target.value) || 0)}
+																		className="w-10 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 rounded px-1.5 py-0.5 text-xs font-mono focus:outline-none focus:border-primary-500 text-center"
+																	/>
+																</div>
+															</div>
+														</details>
+													)}
+												</div>
+											))}
+										</div>
+
+										<div className="pt-2 border-t border-black/5 dark:border-white/5">
+											<ResetButton onConfirm={resetCursors} label="Redefinir Cursores" />
 										</div>
 									</motion.div>
 								)}

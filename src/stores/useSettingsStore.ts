@@ -23,6 +23,30 @@ export interface SettingsState {
 	enableHighlightActiveLine: boolean;
 	restoreCursorPosition: boolean;      // Salva/restaura posição do cursor ao trocar abas
 
+	// Cursors
+	enableCustomCursors: boolean;
+	cursors: {
+		default: string;
+		pointer: string;
+		text: string;
+		grab: string;
+		grabbing: string;
+	};
+	hotspots: {
+		default: { x: number; y: number };
+		pointer: { x: number; y: number };
+		text: { x: number; y: number };
+		grab: { x: number; y: number };
+		grabbing: { x: number; y: number };
+	};
+	enabledCursors: {
+		default: boolean;
+		pointer: boolean;
+		text: boolean;
+		grab: boolean;
+		grabbing: boolean;
+	};
+
 	// Actions
 	setTheme: (theme: 'dark' | 'light') => void;
 	setFontSize: (size: number) => void;
@@ -34,11 +58,40 @@ export interface SettingsState {
 	setShowLineNumbers: (show: boolean) => void;
 	setEnableWordWrap: (enabled: boolean) => void;
 	setEnableMarkdownPreview: (enabled: boolean) => void;
+	setEnableCustomCursors: (enabled: boolean) => void;
 	setLanguage: (lang: 'pt-BR' | 'en-US') => void;
 	setRestoreCursorPosition: (enabled: boolean) => void;
+	setCursorPath: (type: 'default' | 'pointer' | 'text' | 'grab' | 'grabbing', path: string) => void;
+	setCursorHotspot: (type: 'default' | 'pointer' | 'text' | 'grab' | 'grabbing', x: number, y: number) => void;
+	setCursorEnabled: (type: 'default' | 'pointer' | 'text' | 'grab' | 'grabbing', enabled: boolean) => void;
+	resetCursors: () => void;
 	updateSettings: (partial: Partial<SettingsState>) => void;
 	resetToDefaults: () => void;
 }
+
+export const defaultCursors = {
+	default: '/cursors/default.svg',
+	pointer: '/cursors/pointer.svg',
+	text: '/cursors/text.svg',
+	grab: '/cursors/grab.svg',
+	grabbing: '/cursors/grabbing.svg',
+};
+
+export const defaultHotspots = {
+	default: { x: 0, y: 0 },
+	pointer: { x: 0, y: 0 },
+	text: { x: 12, y: 12 }, // Centro aproximado para 24x24
+	grab: { x: 12, y: 12 },
+	grabbing: { x: 12, y: 12 },
+};
+
+export const defaultEnabledCursors = {
+	default: false,
+	pointer: false,
+	text: true,
+	grab: true,
+	grabbing: true,
+};
 
 export const defaultSettings = {
 	theme: 'light' as const,
@@ -57,6 +110,10 @@ export const defaultSettings = {
 	enableStatusColors: true,
 	enableHighlightActiveLine: true,
 	restoreCursorPosition: true,
+	enableCustomCursors: true,
+	cursors: defaultCursors,
+	hotspots: defaultHotspots,
+	enabledCursors: defaultEnabledCursors,
 };
 
 export const useSettingsStore = create<SettingsState>()(
@@ -74,15 +131,41 @@ export const useSettingsStore = create<SettingsState>()(
 			setShowLineNumbers: (showLineNumbers) => set({ showLineNumbers }),
 			setEnableWordWrap: (enableWordWrap) => set({ enableWordWrap }),
 			setEnableMarkdownPreview: (enableMarkdownPreview) => set({ enableMarkdownPreview }),
+			setEnableCustomCursors: (enableCustomCursors) => set({ enableCustomCursors }),
 			setLanguage: (language) => set({ language }),
 			setRestoreCursorPosition: (restoreCursorPosition) => set({ restoreCursorPosition }),
+
+			setCursorPath: (type, path) => set((state) => ({
+				cursors: { ...state.cursors, [type]: path }
+			})),
+
+			setCursorHotspot: (type, x, y) => set((state) => ({
+				hotspots: {
+					...state.hotspots,
+					[type]: { x, y }
+				}
+			})),
+
+			setCursorEnabled: (type, enabled) => set((state) => ({
+				enabledCursors: {
+					...state.enabledCursors,
+					[type]: enabled
+				}
+			})),
+
+			resetCursors: () => set({
+				cursors: defaultCursors,
+				hotspots: defaultHotspots,
+				enabledCursors: defaultEnabledCursors
+			}),
+
 			updateSettings: (partial) => set(partial),
 
 			resetToDefaults: () => set(defaultSettings),
 		}),
 		{
 			name: 'smart-md-settings',
-			version: 3,
+			version: 5, // Incremented version for migration
 		}
 	)
 );

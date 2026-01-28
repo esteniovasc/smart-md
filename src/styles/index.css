@@ -56,6 +56,13 @@
 :root {
 	/* Define política estrita: padrão é light, independente do sistema */
 	color-scheme: light;
+
+	/* Default Cursors Fallbacks */
+	--cursor-default: url('/cursors/default.svg');
+	--cursor-pointer: url('/cursors/pointer.svg');
+	--cursor-text: url('/cursors/text.svg');
+	--cursor-grab: url('/cursors/grab.svg');
+	--cursor-grabbing: url('/cursors/grabbing.svg');
 }
 
 /* Apenas ativa modo dark no navegador se a classe estiver presente */
@@ -81,9 +88,68 @@ body {
 	color: #1e293b;
 	font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu',
 		'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+
+	/* Apply Custom Cursor REMOVED from base body */
+	/* cursor: var(--cursor-default), auto; Moved to .custom-cursors-enabled */
+
 	-webkit-font-smoothing: antialiased;
 	-moz-osx-font-smoothing: grayscale;
 	transition: background 0.3s ease, color 0.3s ease;
+}
+
+body.custom-cursors-enabled {
+	cursor: var(--cursor-default);
+}
+
+/* Global Cursor Overrides (EXTREME SPECIFICITY) - Only when enabled */
+
+/* 1. Pointer (Links, Buttons) */
+.custom-cursors-enabled a,
+.custom-cursors-enabled button,
+.custom-cursors-enabled [role="button"],
+.custom-cursors-enabled input[type="submit"],
+.custom-cursors-enabled input[type="button"],
+.custom-cursors-enabled select,
+.custom-cursors-enabled .cursor-pointer,
+.custom-cursors-enabled .hover\:cursor-pointer:hover {
+	cursor: var(--cursor-pointer) !important;
+}
+
+/* 2. Text (Inputs, CodeMirror) - Force I-beam */
+.custom-cursors-enabled input[type="text"],
+.custom-cursors-enabled input[type="password"],
+.custom-cursors-enabled input[type="email"],
+.custom-cursors-enabled input[type="number"],
+.custom-cursors-enabled textarea,
+.custom-cursors-enabled .cm-content,
+.custom-cursors-enabled .cm-content *,
+.custom-cursors-enabled .cm-line,
+.custom-cursors-enabled .cm-scroller,
+.custom-cursors-enabled [contenteditable="true"] {
+	cursor: var(--cursor-text) !important;
+}
+
+/* 3. Grab / Grabbing (Draggables) */
+.custom-cursors-enabled .cursor-grab {
+	cursor: var(--cursor-grab) !important;
+}
+
+.custom-cursors-enabled .cursor-grabbing,
+.custom-cursors-enabled .active\:cursor-grabbing:active {
+	cursor: var(--cursor-grabbing) !important;
+}
+
+/* 4. Default Override (Scrollbars, Headers) */
+.custom-cursors-enabled ::-webkit-scrollbar,
+.custom-cursors-enabled ::-webkit-scrollbar-thumb,
+.custom-cursors-enabled ::-webkit-scrollbar-track {
+	cursor: var(--cursor-default) !important;
+}
+
+/* Specific fix for Tabs Island wrapper interaction */
+.custom-cursors-enabled .glass-panel,
+.custom-cursors-enabled .group:hover .custom-scrollbar {
+	cursor: var(--cursor-default);
 }
 
 /* Dark Mode - Deep Space */
