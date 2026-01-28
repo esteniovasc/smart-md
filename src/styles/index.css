@@ -191,4 +191,39 @@ body.dark {
 		-webkit-text-fill-color: transparent;
 		color: transparent;
 	}
+
+	/* Custom Scrollbar - Only visible on hover/active */
+	.custom-scrollbar::-webkit-scrollbar {
+		width: 6px;
+		height: 6px;
+	}
+
+	.custom-scrollbar::-webkit-scrollbar-track {
+		background: transparent;
+	}
+
+	.custom-scrollbar::-webkit-scrollbar-thumb {
+		background: rgba(0, 0, 0, 0);
+		/* Invisível por padrão */
+		border-radius: 99px;
+		transition: background 0.2s ease;
+	}
+
+	.custom-scrollbar:hover::-webkit-scrollbar-thumb {
+		background: rgba(0, 0, 0, 0.1);
+		/* Visível leve no hover */
+	}
+
+	.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+		background: rgba(0, 0, 0, 0.3);
+		/* Mais forte ao interagir */
+	}
+
+	.dark .custom-scrollbar:hover::-webkit-scrollbar-thumb {
+		background: rgba(255, 255, 255, 0.1);
+	}
+
+	.dark .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+		background: rgba(255, 255, 255, 0.3);
+	}
 }

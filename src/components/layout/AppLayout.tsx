@@ -1,5 +1,9 @@
 import { useEffect, type ReactNode } from 'react';
+import {
+	Bold, Italic, List, Settings2
+} from 'lucide-react';
 import { Header } from './Header';
+import { SideDock } from './SideDock';
 import { useTabsStore } from '../../stores/useTabsStore';
 
 interface AppLayoutProps {
@@ -7,8 +11,8 @@ interface AppLayoutProps {
 }
 
 /**
- * AppLayout - Container principal que aplica o layout completo
- * Inclui Header fixo e área de conteúdo
+ * AppLayout - Layout Modular com Ilhas Flutuantes
+ * Gerencia o posicionamento das Docks laterais e o espaço central
  */
 export const AppLayout = ({ children }: AppLayoutProps) => {
 	const tabs = useTabsStore((s) => s.tabs);
@@ -32,12 +36,46 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
 		return () => window.removeEventListener('keydown', handleKeyDown);
 	}, [tabs, setActiveTab]);
 
+	const iconButtonClass = `
+		flex items-center justify-center w-10 h-10 rounded-xl
+		text-slate-400 dark:text-slate-500
+		hover:bg-black/5 hover:text-slate-700 
+		dark:hover:bg-white/10 dark:hover:text-slate-200
+		transition-colors cursor-pointer border-none bg-transparent
+	`;
+
 	return (
-		<div className="flex flex-col h-screen w-full overflow-hidden bg-transparent">
+		<div className="min-h-screen w-full bg-transparent font-sans">
 			<Header />
 
-			{/* Main Content */}
-			<main className="flex-1 overflow-hidden p-4 relative z-10">
+			{/* Dock Direita - Ferramentas de Edição (Mantida conforme solicitado/implícito) */}
+			<SideDock position="right">
+				<button className={iconButtonClass} title="Negrito">
+					<Bold strokeWidth={2.5} className="w-5 h-5" />
+				</button>
+				<button className={iconButtonClass} title="Itálico">
+					<Italic strokeWidth={2.5} className="w-5 h-5" />
+				</button>
+				<button className={iconButtonClass} title="Listas">
+					<List strokeWidth={2.5} className="w-5 h-5" />
+				</button>
+				<div className="w-8 h-px bg-black/5 dark:bg-white/10 my-1" />
+				<button className={iconButtonClass} title="Preferências do Editor">
+					<Settings2 strokeWidth={2} className="w-5 h-5" />
+				</button>
+			</SideDock>
+
+			{/* Main Content - Área Central */}
+			{/* Ajustado padding para centralizar já que não tem dock esquerda */}
+			<main
+				className="
+					absolute inset-0 
+					pt-28 pb-6 px-4 md:px-8 lg:px-12 xl:px-16
+					flex flex-col 
+					z-0
+					overflow-hidden
+				"
+			>
 				{children}
 			</main>
 		</div>

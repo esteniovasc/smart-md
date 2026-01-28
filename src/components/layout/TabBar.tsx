@@ -20,29 +20,34 @@ export const TabBar = () => {
 	}, [_hasHydrated, tabs.length, createTab]);
 
 	return (
-		<div className="flex items-center gap-1.5 overflow-x-auto py-1 scrollbar-hide mask-fade-right">
-			<AnimatePresence mode="popLayout">
-				{tabs.map((tab) => (
-					<Tab
-						key={tab.id}
-						title={tab.title}
-						isActive={activeTabId === tab.id}
-						isDirty={tab.isModified}
-						onClick={() => setActiveTab(tab.id)}
-						onClose={() => closeTab(tab.id)}
-					/>
-				))}
-			</AnimatePresence>
+		<div className="flex items-center w-full h-full gap-2">
+			{/* Lista de Abas com Scroll */}
+			<div className="flex-1 overflow-x-auto flex items-center gap-1.5 custom-scrollbar py-1 px-1 mask-fade-right">
+				<AnimatePresence mode="popLayout">
+					{tabs.map((tab) => (
+						<Tab
+							key={tab.id}
+							title={tab.title}
+							isActive={activeTabId === tab.id}
+							isDirty={tab.isModified}
+							onClick={() => setActiveTab(tab.id)}
+							onClose={() => closeTab(tab.id)}
+						/>
+					))}
+				</AnimatePresence>
+			</div>
 
-			{/* Botão nova aba */}
-			<button
-				type="button"
-				onClick={() => createTab('Sem título')}
-				title="Nova aba"
-				className="flex-shrink-0 flex items-center justify-center w-7 h-7 rounded-md border-none bg-transparent text-slate-400 cursor-pointer transition-all duration-150 hover:bg-white/40 hover:text-slate-600 dark:hover:bg-white/10 dark:hover:text-slate-300"
-			>
-				<Plus className="w-4 h-4" strokeWidth={2} />
-			</button>
+			{/* Botão nova aba (Fixo à direita) */}
+			<div className="flex-shrink-0 border-l border-black/5 dark:border-white/5 pl-1">
+				<button
+					type="button"
+					onClick={() => createTab('Sem título')}
+					title="Nova aba"
+					className="flex items-center justify-center w-8 h-8 rounded-md border-none bg-transparent text-slate-400 cursor-pointer transition-all duration-150 hover:bg-black/5 hover:text-slate-600 dark:hover:bg-white/10 dark:hover:text-slate-300"
+				>
+					<Plus className="w-4 h-4" strokeWidth={2} />
+				</button>
+			</div>
 		</div>
 	);
 };
