@@ -1,4 +1,4 @@
-import { useMemo, useCallback, useRef, useEffect } from 'react';
+import { useMemo, useCallback, useRef, useEffect, useState } from 'react';
 import CodeMirror, { EditorView, keymap } from '@uiw/react-codemirror';
 import { markdown } from '@codemirror/lang-markdown';
 import { useTabsStore } from '../../stores/useTabsStore';
@@ -96,6 +96,7 @@ export const Editor = () => {
 	const activeTabId = useTabsStore((s) => s.activeTabId);
 	const updateTabContent = useTabsStore((s) => s.updateTabContent);
 	const updateTabSelection = useTabsStore((s) => s.updateTabSelection);
+	const updateTabScroll = useTabsStore((s) => s.updateTabScroll);
 
 	const activeTab = useMemo(() => {
 		return tabs.find((t) => t.id === activeTabId);
@@ -103,53 +104,119 @@ export const Editor = () => {
 
 	const isDark = theme === 'dark';
 
-	// Referência para o EditorView do CodeMirror
+	// Estado local para a view (garante que o efeito rode quando a view for criada)
+	const [view, setView] = useState<EditorView | null>(null);
+	// Ref redundante para acesso síncrono em callbacks/listeners sem re-render excessivo (opcional, mas bom pra guards)
 	const viewRef = useRef<EditorView | null>(null);
 
-	// Efeito para restaurar foco e cursor ao trocar de aba
-	// Efeito para restaurar foco e cursor ao trocar de aba
+	// Atualiza refs quando o state muda
 	useEffect(() => {
-		if (activeTabId && restoreCursorPosition && viewRef.current) {
-			const view = viewRef.current;
+		viewRef.current = view;
+	}, [view]);
 
-			// Foca imediatamente para experiência "snappy"
+	// Efeito para restaurar foco, cursor e scroll de forma SEMÂNTICA
+	// Agora depende de 'view', então roda garantidamente APÓS o mount do CodeMirror
+	useEffect(() => {
+		if (activeTabId && restoreCursorPosition && view) {
 			view.focus();
 
-			if (activeTab?.selection) {
-				// Pequeno timeout para garantir que o CodeMirror processou o novo conteúdo
-				// Use 0ms para agendar para o próximo tick, geralmente suficiente
-				setTimeout(() => {
-					// Verificação dupla de segurança
-					if (!activeTab?.selection) return;
+			if (activeTab) {
+				const currentTabId = activeTabId; // Capture ID for closure
 
-					const { anchor, head } = activeTab.selection;
-					const docLength = view.state.doc.length;
+				// requestAnimationFrame garante que rodamos logo após o paint inicial
+				requestAnimationFrame(() => {
+					// RACE CONDITION CHECK:
+					if (useTabsStore.getState().activeTabId !== currentTabId) return;
 
-					// Só restaura se as posições forem válidas no documento atual
-					if (anchor <= docLength && head <= docLength) {
+					// 1. Restaurar SCROLL SEMÂNTICO
+					if (typeof activeTab.scrollPosition === 'number') {
 						view.dispatch({
-							selection: { anchor, head },
-							scrollIntoView: true,
+							effects: EditorView.scrollIntoView(activeTab.scrollPosition, { y: 'start' })
 						});
 					}
-				}, 0);
+
+					// 2. Restaurar CURSOR (Modo Seguro / Clamped)
+					if (activeTab.selection) {
+						let { anchor, head } = activeTab.selection;
+						const docLength = view.state.doc.length;
+
+						// Segurança: Se o documento ainda estiver vazio (mas não deveria ser), evitamos restaurar
+						// a menos que a seleção também seja 0.
+						if (docLength === 0 && anchor > 0) return;
+
+						// CLAMPING: Garantimos que o cursor nunca ultrapasse o tamanho do doc atual.
+						anchor = Math.min(anchor, docLength);
+						head = Math.min(head, docLength);
+
+						view.dispatch({
+							selection: { anchor, head },
+							scrollIntoView: false,
+						});
+					}
+				});
 			}
 		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [activeTabId, restoreCursorPosition]); // REMOVIDO activeTab DA DEPENDÊNCIA PARA EVITAR LOOP INFINITO DE RESTAURAÇÃO
+	}, [activeTabId, restoreCursorPosition, view]); // Dependência em VIEW é a chave
 
 	// Extensões reativas baseadas nas configurações
 	const extensions = useMemo(() => {
 		const exts = [
 			markdown(),
 			createGlassTheme(isDark, enableHighlightActiveLine, editorFontSize),
-			// Listener para salvar seleção
+
+			// Listener unificado para Salvar Estado (Seleção + Scroll)
+			// Inclui proteção contra "System Resets" (Tab Switching)
 			EditorView.updateListener.of((update) => {
-				if (update.selectionSet && activeTabId) {
-					const selection = update.state.selection.main;
+				if (!activeTabId) return;
+
+				// Identificar se houve interação do usuário
+				const isUserEvent = update.transactions.some((tr) =>
+					tr.isUserEvent('select') ||
+					tr.isUserEvent('input') ||
+					tr.isUserEvent('delete') ||
+					tr.isUserEvent('undo') ||
+					tr.isUserEvent('redo')
+				);
+
+				// 1. GUARD GERAL (Doc Change)
+				// Se o documento mudou DRASTICAMENTE (ex: troca de aba) 
+				// e NÃO foi interação do usuário, ignoramos.
+				if (update.docChanged && !isUserEvent) {
+					return;
+				}
+
+				const selection = update.state.selection.main;
+
+				// 2. GUARD DE ZERO (Seleção Resetada)
+				// Se a seleção foi para 0,0 e NÃO foi o usuário (click/touch),
+				// assumimos que é um reset de sistema e NÃO salvamos.
+				if (selection.anchor === 0 && selection.head === 0 && !isUserEvent) {
+					return;
+				}
+
+				// 3. Salvar Seleção
+				if (update.selectionSet) {
 					updateTabSelection(activeTabId, { anchor: selection.anchor, head: selection.head });
 				}
+
+				// 4. Salvar Scroll Semântico
+				if (update.viewportChanged) {
+					const scrollTop = update.view.scrollDOM.scrollTop;
+
+					// GUARD DE SCROLL ZERO:
+					// Se o scroll foi para 0, mas NÃO foi detectado evento de usuário,
+					// é muito provável que seja um reset de sistema (load de arquivo).
+					// Ignoramos para não perder a posição salva anterior.
+					// (Exceção: se o doc estiver vazio, ok ser 0).
+					if (scrollTop === 0 && !isUserEvent && update.view.state.doc.length > 0) {
+						return;
+					}
+
+					const topBlock = update.view.lineBlockAtHeight(scrollTop);
+					updateTabScroll(activeTabId, topBlock.from);
+				}
 			}),
+
 			// Atalhos de teclado para zoom
 			keymap.of([
 				{
@@ -178,7 +245,7 @@ export const Editor = () => {
 					},
 					preventDefault: true,
 				},
-			])
+			]),
 		];
 
 		// Quebra de linha
@@ -197,17 +264,26 @@ export const Editor = () => {
 		}
 
 		return exts;
-	}, [isDark, enableWordWrap, markdownViewMode, enableStatusColors, enableHighlightActiveLine, activeTabId, updateTabSelection, editorFontSize, setEditorFontSize]);
+	}, [isDark, enableWordWrap, markdownViewMode, enableStatusColors, enableHighlightActiveLine, activeTabId, updateTabSelection, updateTabScroll, editorFontSize, setEditorFontSize]);
 
-	const handleChange = useCallback((value: string) => {
+	const handleChange = useCallback((value: string, viewUpdate: any) => {
 		if (activeTabId) {
+			// Atualiza conteúdo
 			updateTabContent(activeTabId, value);
+
+			// Atualiza seleção ATOMICAMENTE com o conteúdo
+			// Isso garante que se o usuário digitar e trocar de aba, 
+			// a posição do cursor acompanha o novo texto imediatamente.
+			if (viewUpdate && viewUpdate.state && viewUpdate.state.selection) {
+				const selection = viewUpdate.state.selection.main;
+				updateTabSelection(activeTabId, { anchor: selection.anchor, head: selection.head });
+			}
 		}
-	}, [activeTabId, updateTabContent]);
+	}, [activeTabId, updateTabContent, updateTabSelection]);
 
 	// Callback para capturar a referência da view
 	const handleCreateEditor = useCallback((view: EditorView) => {
-		viewRef.current = view;
+		setView(view);
 	}, []);
 
 	// Estado vazio - sem aba ativa
@@ -229,6 +305,7 @@ export const Editor = () => {
 	return (
 		<div className="h-full w-full overflow-hidden glass-panel">
 			<CodeMirror
+				key={activeTabId} // FORÇA O REMOUNT AO TROCAR DE ABA (ISOLAMENTO TOTAL)
 				value={activeTab.content}
 				onChange={handleChange}
 				onCreateEditor={handleCreateEditor}

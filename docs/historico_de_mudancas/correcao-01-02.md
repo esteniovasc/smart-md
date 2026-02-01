@@ -1,0 +1,1 @@
+Implementa isolamento de abas (key=activeTabId), sincronização via useState e salvamento atômico de seleção no handleChange.

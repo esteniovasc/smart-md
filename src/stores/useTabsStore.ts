@@ -14,6 +14,7 @@ export interface Tab {
 		anchor: number;
 		head: number;
 	};
+	scrollPosition?: number;
 }
 
 export interface TabsState {
@@ -28,6 +29,7 @@ export interface TabsState {
 	updateTabContent: (id: string, content: string) => void;
 	updateTabTitle: (id: string, title: string) => void;
 	updateTabSelection: (id: string, selection: { anchor: number; head: number }) => void;
+	updateTabScroll: (id: string, scrollTop: number) => void;
 	updateTabPath: (id: string, path: string) => void;
 	markTabAsClean: (id: string) => void;
 	closeAllTabs: () => void;
@@ -134,6 +136,16 @@ export const useTabsStore = create<TabsState>()(
 					tabs: state.tabs.map((tab) =>
 						tab.id === id
 							? { ...tab, selection }
+							: tab
+					),
+				}));
+			},
+
+			updateTabScroll: (id: string, scrollPosition: number) => {
+				set((state) => ({
+					tabs: state.tabs.map((tab) =>
+						tab.id === id
+							? { ...tab, scrollPosition }
 							: tab
 					),
 				}));
