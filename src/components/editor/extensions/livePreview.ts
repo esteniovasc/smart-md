@@ -1,121 +1,170 @@
 import {
-  Decoration,
-  type DecorationSet,
-  EditorView,
-  ViewPlugin,
-  type ViewUpdate,
-  WidgetType,
+	Decoration,
+	type DecorationSet,
+	EditorView,
+	ViewPlugin,
+	type ViewUpdate,
+	WidgetType,
 } from '@codemirror/view';
 import { syntaxTree } from '@codemirror/language';
+import { RangeSetBuilder } from '@codemirror/state';
 import type { MarkdownViewMode } from '../../../stores/useSettingsStore';
 
-/**
- * Widget vazio para substituir marcadores Markdown
- */
+// --- WIDGETS ---
+
 class HiddenMarkerWidget extends WidgetType {
-  toDOM() {
-    const span = document.createElement('span');
-    span.className = 'cm-hidden-marker';
-    return span;
-  }
+	toDOM() {
+		const span = document.createElement('span');
+		span.className = 'cm-hidden-marker';
+		return span;
+	}
+}
+
+class HrWidget extends WidgetType {
+	toDOM() {
+		const div = document.createElement('div');
+		div.className = 'cm-hr-widget';
+		const line = document.createElement('hr');
+		div.appendChild(line);
+		return div;
+	}
 }
 
 const hiddenWidget = new HiddenMarkerWidget();
-const replaceDecoration = Decoration.replace({ widget: hiddenWidget });
+const hrWidget = new HrWidget();
 
-// Tipos de nós que queremos ocultar
-const HIDDEN_NODE_TYPES = new Set([
-  'HeaderMark',
-  'EmphasisMark', 
-  'StrikethroughMark',
-  'CodeMark',
-]);
+// Decoration.replace não aceita 'block: true'. Removemos para evitar comportamento indefinido.
+// O widget em si pode ser estilizado como block via CSS.
+const replaceDeco = Decoration.replace({ widget: hiddenWidget });
+const hrDeco = Decoration.replace({ widget: hrWidget });
 
-/**
- * Cria decorações para ocultar marcadores Markdown
- * Otimizado para documentos grandes - processa apenas viewport visível
- */
+// --- DECORATION BUILDER ---
+
 function buildDecorations(view: EditorView, mode: MarkdownViewMode): DecorationSet {
-  const decorations: { from: number; to: number }[] = [];
-  const cursorLine = view.state.doc.lineAt(view.state.selection.main.head).number;
-  
-  // Processar apenas o viewport visível + margem
-  const { from: viewFrom, to: viewTo } = view.viewport;
-  
-  try {
-    syntaxTree(view.state).iterate({
-      from: viewFrom,
-      to: viewTo,
-      enter(node) {
-        if (!HIDDEN_NODE_TYPES.has(node.name)) return;
-        
-        // Evitar erro se node.from está fora do documento
-        if (node.from >= view.state.doc.length) return;
-        
-        const line = view.state.doc.lineAt(node.from).number;
-        
-        // Se modo 'current-line', não ocultar na linha ativa
-        if (mode === 'current-line' && line === cursorLine) return;
+	// Se modo 'visible', não esconde nada
+	if (!mode || mode === 'visible') return Decoration.none;
 
-        // Headers: incluir espaço após o #
-        const to = node.name === 'HeaderMark' 
-          ? Math.min(node.to + 1, view.state.doc.length)
-          : node.to;
+	const builder = new RangeSetBuilder<Decoration>();
+	const candidates: Array<{ from: number; to: number; deco: Decoration }> = [];
 
-        decorations.push({ from: node.from, to });
-      },
-    });
-  } catch {
-    // Se houver erro ao processar, retornar vazio
-    return Decoration.none;
-  }
+	const { state } = view;
+	const doc = state.doc;
 
-  // Ordenar por posição (necessário para RangeSet)
-  decorations.sort((a, b) => a.from - b.from);
+	if (doc.length === 0) return Decoration.none;
 
-  // Criar RangeSet a partir do array ordenado
-  return Decoration.set(
-    decorations.map(d => replaceDecoration.range(d.from, d.to))
-  );
+	const selection = state.selection;
+	const cursorHead = selection.main.head;
+	const cursorLineObj = doc.lineAt(cursorHead);
+	const cursorLineNum = cursorLineObj.number;
+
+	try {
+		// Varredura completa do documento usando a árvore de sintaxe oficial
+		syntaxTree(state).iterate({
+			from: 0,
+			to: doc.length,
+			enter: (node) => {
+				// 1. Horizontal Rules (---)
+				// O parser garante que só entra aqui se for hr real
+				if (node.name === 'HorizontalRule') {
+					if (mode === 'current-line' && doc.lineAt(node.from).number === cursorLineNum) return;
+
+					candidates.push({ from: node.from, to: node.to, deco: hrDeco });
+					return;
+				}
+
+				// 2. Header Marks (# ou ---/===)
+				// O parser identifica 'HeaderMark' tanto para ATX (# Título) quanto Setext (Título \n ---)
+				// Isso simplifica tudo: se é HeaderMark, nós escondemos.
+				// O parser já resolveu se é título ou HR.
+				if (node.name === 'HeaderMark') {
+					if (mode === 'current-line' && doc.lineAt(node.from).number === cursorLineNum) return;
+
+					candidates.push({ from: node.from, to: node.to, deco: replaceDeco });
+					return;
+				}
+
+				// 3. Ênfase / Formatação
+				if (node.name === 'EmphasisMark' || node.name === 'StrongEmphasisMark' || node.name === 'CodeMark' || node.name === 'LinkMark') {
+					if (mode === 'current-line' && doc.lineAt(node.from).number === cursorLineNum) return;
+
+					candidates.push({ from: node.from, to: node.to, deco: replaceDeco });
+					return;
+				}
+			},
+		});
+
+		// --- SORT & FILTER (Anti-Crash) ---
+		candidates.sort((a, b) => a.from - b.from || a.to - b.to);
+
+		let lastTo = 0;
+		for (const cand of candidates) {
+			// Double check limites
+			if (cand.to > doc.length) continue;
+
+			// Ignorar sobreposições
+			if (cand.from < lastTo) continue;
+
+			builder.add(cand.from, cand.to, cand.deco);
+			lastTo = cand.to;
+		}
+
+	} catch (e) {
+		console.error("SmartMD LivePreview Crash Prevention:", e);
+		return Decoration.none;
+	}
+
+	return builder.finish();
 }
 
 /**
- * Cria extensão Live Preview com modo configurável
+ * Extensão Live Preview - Modo Seguro
  */
 export function createLivePreviewExtension(mode: MarkdownViewMode) {
-  return ViewPlugin.fromClass(
-    class {
-      decorations: DecorationSet;
+	return ViewPlugin.fromClass(
+		class {
+			decorations: DecorationSet;
 
-      constructor(view: EditorView) {
-        this.decorations = buildDecorations(view, mode);
-      }
+			constructor(view: EditorView) {
+				this.decorations = buildDecorations(view, mode);
+			}
 
-      update(update: ViewUpdate) {
-        // No modo 'hidden', só atualiza se doc mudou
-        // No modo 'current-line', atualiza também quando cursor move
-        if (mode === 'hidden') {
-          if (update.docChanged) {
-            this.decorations = buildDecorations(update.view, mode);
-          }
-        } else {
-          if (update.docChanged || update.selectionSet || update.viewportChanged) {
-            this.decorations = buildDecorations(update.view, mode);
-          }
-        }
-      }
-    },
-    {
-      decorations: (v) => v.decorations,
-    }
-  );
+			update(update: ViewUpdate) {
+				if (
+					update.docChanged ||
+					update.viewportChanged ||
+					update.selectionSet
+				) {
+					this.decorations = buildDecorations(update.view, mode);
+				}
+			}
+		},
+		{
+			decorations: (v) => v.decorations,
+		}
+	);
 }
 
-/**
- * Tema para marcadores ocultos
- */
 export const livePreviewTheme = EditorView.baseTheme({
-  '.cm-hidden-marker': {
-    display: 'none',
-  },
+	'.cm-hidden-marker': {
+		display: 'inline-block',
+		width: '0',
+		height: '0',
+		overflow: 'hidden',
+		verticalAlign: 'text-top',
+	},
+	'.cm-hr-widget': {
+		display: 'flex', // Flex para ocupar a linha corretamente
+		width: '100%',
+		alignItems: 'center',
+		cursor: 'default',
+		userSelect: 'none',
+		minHeight: '1em', // Garante altura mínima
+	},
+	'.cm-hr-widget hr': {
+		width: '100%',
+		border: 'none',
+		borderTop: '2px solid var(--cm-hr-color, rgba(148, 163, 184, 0.4))',
+		margin: '0',
+		borderRadius: '2px',
+	}
 });
