@@ -5,6 +5,7 @@ import { useTabsStore } from '../../stores/useTabsStore';
 import { useSettingsStore } from '../../stores/useSettingsStore';
 import { createLivePreviewExtension, livePreviewTheme } from './extensions/livePreview';
 import { statusLinesExtension, statusLinesTheme } from './extensions/statusLines';
+import { bulletPointsExtension, bulletPointsTheme } from './extensions/bulletPoints';
 
 /**
  * Cria tema transparente para efeito Liquid Glass
@@ -262,6 +263,9 @@ export const Editor = () => {
 		if (enableStatusColors) {
 			exts.push(statusLinesExtension, statusLinesTheme);
 		}
+
+		// Visual Bullet Points - sempre ativo (por enquanto)
+		exts.push(bulletPointsExtension, bulletPointsTheme);
 
 		return exts;
 	}, [isDark, enableWordWrap, markdownViewMode, enableStatusColors, enableHighlightActiveLine, activeTabId, updateTabSelection, updateTabScroll, editorFontSize, setEditorFontSize]);
