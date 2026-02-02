@@ -38,10 +38,14 @@ function buildBulletDecorations(view: EditorView): DecorationSet {
 				if (node.name === 'ListMark') {
 					const markText = view.state.sliceDoc(node.from, node.to);
 
-					// Verifica se é um marcador de lista não-ordenada (*, -, +)
-					// Isso ignora '1.' (listas numeradas) e 'HeaderMark' (#)
-					// O parser Markdown garante que isso NÃO é ênfase (*italico*).
-					if (/^[\*\-\+]\s?$/.test(markText)) {
+					// Lógica Google Docs:
+					// Só vira bullet se tiver ESPAÇO HORIZONTAL (espaço ou tab) depois.
+					// O Parser pode emitir 'ListMark' para '*' isolado seguido de quebra de linha.
+					// Precisamos garantir que existe espaço REAL (não enter).
+					const nextChar = view.state.sliceDoc(node.to, node.to + 1);
+					const hasSpace = /[ \t]/.test(markText) || /[ \t]/.test(nextChar);
+
+					if (['*', '-', '+'].includes(markText[0]) && hasSpace) {
 						builder.add(node.from, node.to, replaceDeco);
 					}
 				}
@@ -82,7 +86,7 @@ export const bulletPointsTheme = EditorView.baseTheme({
 		display: 'inline-block',
 		width: '24px',          // Espaço reservado para o bullet
 		textAlign: 'center',    // Centralizado nesse espaço
-		color: 'var(--cm-header-color, #6366f1)', // Roxo padrão
+		color: '#000000ff',
 		fontSize: '1.4em',
 		lineHeight: '1',
 		fontWeight: 'bold',
