@@ -1,8 +1,19 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { getSuggestedColor } from '../utils/colorUtils';
 
 // Modos de visualização de marcadores Markdown
 export type MarkdownViewMode = 'visible' | 'current-line' | 'hidden';
+
+
+// Configuração de Marcadores de Lista
+export interface ListMarkerConfig {
+	enabled: boolean;
+	color: string; // Cor ativa atual
+	customIcon?: string; // Base64 ou URL
+	lightColor?: string; // Cor persistida para modo claro
+	darkColor?: string;  // Cor persistida para modo escuro
+}
 
 export interface SettingsState {
 	theme: 'dark' | 'light';
@@ -22,6 +33,13 @@ export interface SettingsState {
 	enableStatusColors: boolean;         // Pinta linhas de tarefas (✅, ⚠️)
 	enableHighlightActiveLine: boolean;
 	restoreCursorPosition: boolean;      // Salva/restaura posição do cursor ao trocar abas
+
+	// List Markers Customization
+	listMarkers: {
+		'*': ListMarkerConfig;
+		'-': ListMarkerConfig;
+		'+': ListMarkerConfig;
+	};
 
 	// Cursors
 	enableCustomCursors: boolean;
@@ -67,6 +85,9 @@ export interface SettingsState {
 	setEnableCustomCursors: (enabled: boolean) => void;
 	setLanguage: (lang: 'pt-BR' | 'en-US') => void;
 	setRestoreCursorPosition: (enabled: boolean) => void;
+
+	setListMarkerConfig: (char: '*' | '-' | '+', config: Partial<ListMarkerConfig>) => void;
+
 	setCursorPath: (type: 'default' | 'pointer' | 'text' | 'grab' | 'grabbing', path: string) => void;
 	setCursorHotspot: (type: 'default' | 'pointer' | 'text' | 'grab' | 'grabbing', x: number, y: number) => void;
 	setCursorEnabled: (type: 'default' | 'pointer' | 'text' | 'grab' | 'grabbing', enabled: boolean) => void;
@@ -106,6 +127,12 @@ export const defaultEnabledCursors = {
 	grabbing: true,
 };
 
+export const defaultListMarkers = {
+	'*': { enabled: true, color: '', lightColor: '', darkColor: '' },
+	'-': { enabled: true, color: '', lightColor: '', darkColor: '' },
+	'+': { enabled: false, color: '', lightColor: '', darkColor: '' },
+};
+
 export const defaultSettings = {
 	theme: 'light' as const,
 	fontSize: 14,
@@ -123,6 +150,10 @@ export const defaultSettings = {
 	enableStatusColors: true,
 	enableHighlightActiveLine: true,
 	restoreCursorPosition: true,
+
+	// Markers Defaults
+	listMarkers: defaultListMarkers,
+
 	enableCustomCursors: true,
 	cursors: defaultCursors,
 	hotspots: defaultHotspots,
@@ -140,7 +171,45 @@ export const useSettingsStore = create<SettingsState>()(
 		(set, _get) => ({
 			...defaultSettings,
 
-			setTheme: (theme) => set({ theme }),
+			setTheme: (theme) => set((state) => {
+				// Ao trocar o tema, atualiza as cores dos marcadores
+				const newListMarkers: Record<string, ListMarkerConfig> = {};
+
+				(Object.keys(state.listMarkers) as Array<keyof typeof state.listMarkers>).forEach((key) => {
+					// CRITICAL: Clone the object to avoid mutating previous state
+					const oldMarker = state.listMarkers[key];
+					const newMarker = { ...oldMarker };
+
+					const isGoingToDark = theme === 'dark';
+
+					// 1. Salva a cor atual no slot do tema ANTERIOR (se aplicável)
+					if (state.theme === 'light') newMarker.lightColor = oldMarker.color;
+					else newMarker.darkColor = oldMarker.color;
+
+					// 2. Tenta carregar a cor do NOVO tema
+					let nextColor = isGoingToDark ? newMarker.darkColor : newMarker.lightColor;
+
+					// 3. Se não houver cor salva para o novo tema, gera uma automática baseada na anterior
+					if (nextColor === undefined || nextColor === '') {
+						// Se a cor anterior era vazia, continua vazia (hardcoded default)
+						if (!oldMarker.color) {
+							nextColor = '';
+						} else {
+							// Calcula cor segura para o novo tema
+							nextColor = getSuggestedColor(oldMarker.color, isGoingToDark);
+						}
+
+						// Salva essa cor gerada para persistência futura
+						if (isGoingToDark) newMarker.darkColor = nextColor;
+						else newMarker.lightColor = nextColor;
+					}
+
+					newMarker.color = nextColor;
+					newListMarkers[key] = newMarker;
+				});
+
+				return { theme, listMarkers: newListMarkers as typeof state.listMarkers };
+			}),
 			setFontSize: (fontSize) => set({ fontSize }),
 			setFontFamily: (fontFamily) => set({ fontFamily }),
 			setEditorFontSize: (editorFontSize) => set({ editorFontSize }),
@@ -153,6 +222,24 @@ export const useSettingsStore = create<SettingsState>()(
 			setEnableCustomCursors: (enableCustomCursors) => set({ enableCustomCursors }),
 			setLanguage: (language) => set({ language }),
 			setRestoreCursorPosition: (restoreCursorPosition) => set({ restoreCursorPosition }),
+
+			setListMarkerConfig: (char, config) => set((state) => {
+				const current = state.listMarkers[char] || { enabled: true, color: '' };
+				const updated = { ...current, ...config };
+
+				// Se a cor mudou, atualiza também o slot persistente do tema ATUAL
+				if (config.color !== undefined) {
+					if (state.theme === 'dark') updated.darkColor = config.color;
+					else updated.lightColor = config.color;
+				}
+
+				return {
+					listMarkers: {
+						...state.listMarkers,
+						[char]: updated,
+					},
+				};
+			}),
 
 			setCursorPath: (type, path) => set((state) => ({
 				cursors: { ...state.cursors, [type]: path }
@@ -189,7 +276,7 @@ export const useSettingsStore = create<SettingsState>()(
 		}),
 		{
 			name: 'smart-md-settings',
-			version: 7, // Incremented version for migration
+			version: 8, // Incremented version for migration (State Shape Changed)
 		}
 	)
 );

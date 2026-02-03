@@ -1,9 +1,10 @@
 import { useRef, useState, useEffect } from 'react';
 import { motion, AnimatePresence, useDragControls, useMotionValue } from 'framer-motion';
-import { X, GripHorizontal, Sliders, Type, RotateCcw, Plus, Minus, Check, MousePointer2, Upload, ChevronDown, Palette, Zap } from 'lucide-react';
+import { X, GripHorizontal, Sliders, Type, RotateCcw, Plus, Minus, Check, MousePointer2, Upload, ChevronDown, Palette, Zap, List, Circle, TriangleAlert } from 'lucide-react';
 import { Switch } from './Switch';
 import { SegmentedControl } from './SegmentedControl';
 import { useSettingsStore, type MarkdownViewMode, defaultSettings } from '../../stores/useSettingsStore';
+import { getEffectiveLuminance, getSuggestedColor } from '../../utils/colorUtils';
 
 // Helper para converter Hex/Hex8 para { color, alpha }
 const parseColor = (hex: string) => {
@@ -35,6 +36,8 @@ const createHexColor = (color: string, alpha: number) => {
 	return `${color}${alphaHex}`;
 };
 
+
+
 const ColorPickerWithAlpha = ({
 	label,
 	description,
@@ -48,20 +51,66 @@ const ColorPickerWithAlpha = ({
 	onChange: (val: string) => void,
 	placeholder?: string
 }) => {
-	const { color, alpha } = parseColor(value);
+	// Local state for instant feedback without heavy store updates
+	const [localValue, setLocalValue] = useState(value);
+	const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+	const theme = useSettingsStore((s) => s.theme);
+	const isDark = theme === 'dark';
+
+	// Sync local state when external value changes (e.g. reset or smart adjustment)
+	useEffect(() => {
+		setLocalValue(value);
+	}, [value]);
+
+	// Clean up timeout
+	useEffect(() => {
+		return () => {
+			if (timeoutRef.current) clearTimeout(timeoutRef.current);
+		};
+	}, []);
+
+	// Debounced Store Update
+	const updateParent = (newValue: string) => {
+		if (timeoutRef.current) clearTimeout(timeoutRef.current);
+		timeoutRef.current = setTimeout(() => {
+			onChange(newValue);
+		}, 100); // 100ms debounce
+	};
+
+	const { color, alpha } = parseColor(localValue);
+
+	// Check Contrast Warning with Effective Blending (uses localValue for instant feedback)
+	const effectiveLuma = localValue ? getEffectiveLuminance(localValue, isDark) : (isDark ? 255 : 0);
+	const minContrast = 60;
+	const maxContrast = 195;
+	const isLowContrast = (isDark && effectiveLuma < minContrast) || (!isDark && effectiveLuma > maxContrast);
 
 	const handleColorChange = (newColor: string) => {
-		if (value && value.length > 7) {
-			// Mantém alpha existente
-			onChange(createHexColor(newColor, alpha));
+		let nextVal;
+		if (localValue && localValue.length > 7) {
+			nextVal = createHexColor(newColor, alpha);
 		} else {
-			// Assume 100% se não tinha alpha
-			onChange(newColor);
+			nextVal = newColor;
 		}
+		setLocalValue(nextVal);
+		updateParent(nextVal);
 	};
 
 	const handleAlphaChange = (newAlpha: number) => {
-		onChange(createHexColor(color, newAlpha));
+		const nextVal = createHexColor(color, newAlpha);
+		setLocalValue(nextVal);
+		updateParent(nextVal);
+	};
+
+	const handleTextChange = (val: string) => {
+		setLocalValue(val);
+		updateParent(val);
+	};
+
+	const handleReset = () => {
+		setLocalValue('');
+		onChange(''); // Instant reset is fine
 	};
 
 	return (
@@ -81,7 +130,7 @@ const ColorPickerWithAlpha = ({
 					<div className="relative w-10 h-10 rounded-lg overflow-hidden border border-gray-200 dark:border-zinc-700 shadow-sm flex-shrink-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4IiBoZWlnaHQ9IjgiPjxyZWN0IHdpZHRoPSI4IiBoZWlnaHQ9IjgiIGZpbGw9IiNmZmYiLz48cGF0aCBkPSJNMCAwaDR2LTRoLTR6bTQgNGg0djRoLTR6IiBmaWxsPSIjY2NjIiBmaWxsLW9wYWNpdHk9IjAuNCIvPjwvc3ZnPg==')]">
 						<div
 							className="absolute inset-0"
-							style={{ backgroundColor: value || 'transparent' }}
+							style={{ backgroundColor: localValue || 'transparent' }}
 						/>
 						<input
 							type="color"
@@ -93,15 +142,15 @@ const ColorPickerWithAlpha = ({
 					<div className="flex-1">
 						<input
 							type="text"
-							value={value}
-							onChange={(e) => onChange(e.target.value)}
+							value={localValue}
+							onChange={(e) => handleTextChange(e.target.value)}
 							className="w-full bg-white dark:bg-zinc-950 border border-gray-200 dark:border-zinc-800 rounded-md px-3 py-2 text-sm font-mono text-gray-600 dark:text-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 uppercase"
 							placeholder={placeholder}
 						/>
 					</div>
-					{value && (
+					{localValue && (
 						<button
-							onClick={() => onChange('')}
+							onClick={handleReset}
 							className="p-2 text-gray-500 hover:text-red-500 transition-colors"
 							title="Restaurar padrão"
 						>
@@ -111,7 +160,7 @@ const ColorPickerWithAlpha = ({
 				</div>
 
 				{/* Row 2: Opacity Slider */}
-				{value && (
+				{localValue && (
 					<div className="flex items-center gap-3 pt-1">
 						<span className="text-xs text-gray-500 font-medium w-12">Opacidade</span>
 						<input
@@ -125,6 +174,22 @@ const ColorPickerWithAlpha = ({
 						<span className="text-xs text-gray-600 dark:text-gray-400 w-8 text-right font-mono">
 							{alpha}%
 						</span>
+					</div>
+				)}
+
+				{/* Warning Message */}
+				{value && isLowContrast && (
+					<div className="flex items-center gap-2 text-xs text-amber-600 dark:text-amber-500 bg-amber-50 dark:bg-amber-500/10 p-2 rounded border border-amber-200 dark:border-amber-500/20 justify-between">
+						<div className="flex items-center gap-2">
+							<TriangleAlert className="w-3.5 h-3.5 flex-shrink-0" />
+							<span>Baixo contraste.</span>
+						</div>
+						<button
+							onClick={() => handleTextChange(getSuggestedColor(localValue, isDark))}
+							className="px-2 py-0.5 bg-amber-100 hover:bg-amber-200 dark:bg-amber-500/20 dark:hover:bg-amber-500/30 text-amber-700 dark:text-amber-300 rounded text-[10px] font-medium transition-colors border border-amber-200 dark:border-amber-500/30 cursor-pointer whitespace-nowrap"
+						>
+							Corrigir
+						</button>
 					</div>
 				)}
 			</div>
@@ -222,7 +287,7 @@ export const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
 	const dragControls = useDragControls();
 	const constraintsRef = useRef<HTMLDivElement>(null);
 	const modalRef = useRef<HTMLDivElement>(null);
-	const [activeTab, setActiveTab] = useState<'general' | 'editor' | 'appearance' | 'cursors'>('general');
+	const [activeTab, setActiveTab] = useState<'general' | 'editor' | 'appearance' | 'cursors' | 'list-markers'>('general');
 
 	// Motion value para controlar a posição Y manualmente
 	const y = useMotionValue(0);
@@ -255,6 +320,11 @@ export const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
 		setEditorBackgroundColor,
 		setEnableDynamicBackground,
 		setSpotlightRadius,
+
+
+		// List Markers
+		listMarkers,
+		setListMarkerConfig,
 
 		resetCursors,
 	} = useSettingsStore();
@@ -351,17 +421,15 @@ export const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
 						dragMomentum={false}
 						dragElastic={0}
 						dragConstraints={constraintsRef}
-						className="fixed top-20 right-6 z-51 w-96 max-w-[calc(100vw-48px)] select-none"
+						className="fixed top-20 right-6 z-51 w-[500px] max-w-[calc(100vw-48px)] select-none"
 					>
-						<motion.div
-							layout="position" // Previne distorção no container interno
+						<div
 							className="bg-white/98 dark:bg-zinc-900/95 backdrop-blur-xl rounded-xl shadow-2xl overflow-hidden border border-black/5 dark:border-white/10 flex flex-col max-h-[80vh]"
 						>
 							{/* Header */}
-							<motion.div
-								layout="position" // Previne distorção no header
+							<div
 								onPointerDown={(e) => dragControls.start(e)}
-								className="flex items-center justify-between px-3.5 py-2.5 border-b border-black/5 dark:border-white/5 cursor-grab active:cursor-grabbing"
+								className="flex items-center justify-between px-3.5 py-2.5 border-b border-black/5 dark:border-white/5 cursor-grab active:cursor-grabbing shrink-0"
 							>
 								<div className="flex items-center gap-2">
 									<GripHorizontal className="w-3.5 h-3.5 text-gray-400 dark:text-gray-500" />
@@ -375,16 +443,15 @@ export const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
 								>
 									<X className="w-3.5 h-3.5" />
 								</button>
-							</motion.div>
+							</div>
 
 							{/* Tabs Navigation */}
-							<motion.div
-								layout="position" // Previne distorção na navegação
-								className="flex items-center gap-6 px-6 border-b border-black/5 dark:border-white/5 bg-gray-50/50 dark:bg-zinc-800/30"
+							<div
+								className="flex items-center gap-6 px-6 border-b border-black/5 dark:border-white/5 bg-gray-50/50 dark:bg-zinc-800/30 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none'] flex-nowrap shrink-0"
 							>
 								<button
 									onClick={() => setActiveTab('general')}
-									className={`pb-2 text-sm font-medium transition-colors relative flex items-center gap-2 ${activeTab === 'general'
+									className={`flex-shrink-0 whitespace-nowrap py-2 text-sm font-medium transition-colors relative flex items-center gap-2 ${activeTab === 'general'
 										? 'text-primary-600 dark:text-primary-400'
 										: 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
 										}`}
@@ -400,7 +467,7 @@ export const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
 								</button>
 								<button
 									onClick={() => setActiveTab('editor')}
-									className={`pb-2 text-sm font-medium transition-colors relative flex items-center gap-2 ${activeTab === 'editor'
+									className={`flex-shrink-0 whitespace-nowrap py-2 text-sm font-medium transition-colors relative flex items-center gap-2 ${activeTab === 'editor'
 										? 'text-primary-600 dark:text-primary-400'
 										: 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
 										}`}
@@ -416,7 +483,7 @@ export const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
 								</button>
 								<button
 									onClick={() => setActiveTab('appearance')}
-									className={`pb-2 text-sm font-medium transition-colors relative flex items-center gap-2 ${activeTab === 'appearance'
+									className={`flex-shrink-0 whitespace-nowrap py-2 text-sm font-medium transition-colors relative flex items-center gap-2 ${activeTab === 'appearance'
 										? 'text-primary-600 dark:text-primary-400'
 										: 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
 										}`}
@@ -432,19 +499,40 @@ export const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
 								</button>
 								<button
 									onClick={() => setActiveTab('cursors')}
-									className={`pb-2 text-sm font-medium transition-colors relative ${activeTab === 'cursors'
+									className={`flex-shrink-0 whitespace-nowrap py-2 text-sm font-medium transition-colors relative flex items-center gap-2 ${activeTab === 'cursors'
 										? 'text-primary-600 dark:text-primary-400'
 										: 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
 										}`}
 								>
 									<MousePointer2 className="w-3.5 h-3.5" />
 									Cursores
+									{activeTab === 'cursors' && (
+										<motion.div
+											layoutId="activeTab"
+											className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary-600 dark:bg-primary-400 rounded-full"
+										/>
+									)}
 								</button>
-							</motion.div>
+								<button
+									onClick={() => setActiveTab('list-markers')}
+									className={`flex-shrink-0 whitespace-nowrap py-2 text-sm font-medium transition-colors relative flex items-center gap-2 ${activeTab === 'list-markers'
+										? 'text-primary-600 dark:text-primary-400'
+										: 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
+										}`}
+								>
+									<List className="w-3.5 h-3.5" />
+									Listas
+									{activeTab === 'list-markers' && (
+										<motion.div
+											layoutId="activeTab"
+											className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary-600 dark:bg-primary-400 rounded-full"
+										/>
+									)}
+								</button>
+							</div>
 
 							{/* Content Area */}
-							<motion.div
-								layout="position" // Previne distorção no wrapper de conteúdo
+							<div
 								className="p-3.5 pt-1 pb-3.5 overflow-y-auto custom-scrollbar"
 							>
 
@@ -757,11 +845,76 @@ export const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
 										</div>
 									</motion.div>
 								)}
-							</motion.div>
-						</motion.div>
+
+								{/* LIST MARKERS TAB */}
+								{activeTab === 'list-markers' && (
+									<motion.div
+										key="list-markers"
+										initial={{ opacity: 0, x: 10 }}
+										animate={{ opacity: 1, x: 0 }}
+										exit={{ opacity: 0, x: -10 }}
+										transition={{ duration: 0.2 }}
+										className="space-y-6"
+									>
+										<div className="space-y-4">
+											<div className="flex items-center gap-2 mb-4">
+												<Circle className="w-4 h-4 text-primary-500 fill-current" />
+												<h3 className="text-sm font-medium text-gray-900 dark:text-gray-100 m-0">
+													Personalizar Marcadores
+												</h3>
+											</div>
+
+											{/* Mapeia os caracteres configuráveis */}
+											{Object.entries(listMarkers).map(([char, config]) => (
+												<div key={char} className="p-3 bg-gray-50 dark:bg-zinc-900 rounded-lg border border-gray-100 dark:border-zinc-800 space-y-3">
+													<div className="flex items-center justify-between">
+														<div className="flex items-center gap-3">
+															{/* Preview visual do caractere original */}
+															<div className="w-8 h-8 flex items-center justify-center bg-white dark:bg-zinc-800 rounded-md border border-gray-200 dark:border-zinc-700 font-mono text-lg font-bold">
+																{char}
+															</div>
+															<div>
+																<label className="text-sm font-medium text-gray-700 dark:text-gray-300 block">
+																	Marcador "{char}"
+																</label>
+																<p className="text-xs text-gray-500 dark:text-gray-400">
+																	{config.enabled ? 'Substituído por Bullet' : 'Mostrar original'}
+																</p>
+															</div>
+														</div>
+														<Switch
+															checked={config.enabled}
+															onChange={(val) => setListMarkerConfig(char as any, { enabled: val })}
+														/>
+													</div>
+
+													{/* Configurações visuais (apenas se habilitado) */}
+													{config.enabled && (
+														<div className="pl-[44px] space-y-3 pt-1 border-t border-gray-200 dark:border-zinc-800/50 mt-2">
+															<ColorPickerWithAlpha
+																label="Cor Personalizada"
+																description="Deixe vazio para usar a cor do texto (Smart Theme)"
+																value={config.color}
+																onChange={(val) => setListMarkerConfig(char as any, { color: val })}
+																placeholder="Automático"
+															/>
+														</div>
+													)}
+												</div>
+											))}
+
+											<p className="text-xs text-gray-500 dark:text-gray-400 px-1 text-center mt-4">
+												Dica: A cor "Automático" se adapta ao tema (Escuro/Claro).
+											</p>
+										</div>
+									</motion.div>
+								)}
+							</div>
+						</div>
 					</motion.div>
 				</>
-			)}
-		</AnimatePresence>
+			)
+			}
+		</AnimatePresence >
 	);
 };
