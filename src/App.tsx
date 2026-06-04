@@ -11,6 +11,7 @@ import { DynamicBackground } from './components/layout/DynamicBackground';
 import { usePageTitle } from './hooks/usePageTitle';
 
 import { useBackground } from './hooks/useBackground';
+import { useUnsavedWarning } from './hooks/useUnsavedWarning';
 
 /**
  * Smart MD - Editor de Markdown PWA
@@ -22,6 +23,7 @@ export default function App() {
 	useCursors();
 	usePageTitle();
 	useBackground();
+	useUnsavedWarning();
 
 	return (
 		<AppLayout>

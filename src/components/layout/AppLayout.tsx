@@ -1,9 +1,5 @@
 import { useEffect, type ReactNode } from 'react';
-import {
-	Bold, Italic, List, Settings2
-} from 'lucide-react';
 import { Header } from './Header';
-import { SideDock } from './SideDock';
 import { useTabsStore } from '../../stores/useTabsStore';
 
 interface AppLayoutProps {
@@ -47,23 +43,6 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
 	return (
 		<div className="min-h-screen w-full bg-transparent font-sans">
 			<Header />
-
-			{/* Dock Direita - Ferramentas de Edição (Mantida conforme solicitado/implícito) */}
-			<SideDock position="right">
-				<button className={iconButtonClass} title="Negrito">
-					<Bold strokeWidth={2.5} className="w-5 h-5" />
-				</button>
-				<button className={iconButtonClass} title="Itálico">
-					<Italic strokeWidth={2.5} className="w-5 h-5" />
-				</button>
-				<button className={iconButtonClass} title="Listas">
-					<List strokeWidth={2.5} className="w-5 h-5" />
-				</button>
-				<div className="w-8 h-px bg-black/5 dark:bg-white/10 my-1" />
-				<button className={iconButtonClass} title="Preferências do Editor">
-					<Settings2 strokeWidth={2} className="w-5 h-5" />
-				</button>
-			</SideDock>
 
 			{/* Main Content - Área Central */}
 			{/* Ajustado padding para centralizar já que não tem dock esquerda */}

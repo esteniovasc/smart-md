@@ -1,11 +1,14 @@
 import { useMemo, useCallback, useRef, useEffect, useState } from 'react';
 import CodeMirror, { EditorView, keymap } from '@uiw/react-codemirror';
 import { markdown } from '@codemirror/lang-markdown';
+import { Strikethrough } from '@lezer/markdown';
 import { useTabsStore } from '../../stores/useTabsStore';
 import { useSettingsStore } from '../../stores/useSettingsStore';
 import { createLivePreviewExtension, livePreviewTheme } from './extensions/livePreview';
 import { statusLinesExtension, statusLinesTheme } from './extensions/statusLines';
 import { createBulletPointsExtension, bulletPointsTheme } from './extensions/bulletPoints';
+import { formattingKeymap } from './extensions/formatting';
+import { SelectionMenu } from './SelectionMenu';
 
 /**
  * Cria tema transparente para efeito Liquid Glass
@@ -74,6 +77,10 @@ const createGlassTheme = (isDark: boolean, highlightActiveLine: boolean, fontSiz
 		},
 		'.cm-meta': {
 			color: isDark ? 'rgba(148, 163, 184, 0.6)' : 'rgba(100, 116, 139, 0.6)',
+		},
+		'.cm-strikethrough': {
+			textDecoration: 'line-through',
+			color: isDark ? 'rgba(148, 163, 184, 0.7)' : 'rgba(100, 116, 139, 0.7)',
 		},
 	}, { dark: isDark });
 };
@@ -163,7 +170,7 @@ export const Editor = () => {
 	// Extensões reativas baseadas nas configurações
 	const extensions = useMemo(() => {
 		const exts = [
-			markdown(),
+			markdown({ extensions: [Strikethrough] }),
 			createGlassTheme(isDark, enableHighlightActiveLine, editorFontSize),
 
 			// Listener unificado para Salvar Estado (Seleção + Scroll)
@@ -248,6 +255,7 @@ export const Editor = () => {
 					preventDefault: true,
 				},
 			]),
+			formattingKeymap,
 		];
 
 		// Quebra de linha
@@ -334,6 +342,7 @@ export const Editor = () => {
 				}}
 				className="h-full text-slate-800 dark:text-gray-100"
 			/>
+			<SelectionMenu view={view} />
 		</div>
 	);
 };

@@ -84,7 +84,7 @@ function buildDecorations(view: EditorView, mode: MarkdownViewMode): DecorationS
 				}
 
 				// 3. Ênfase / Formatação
-				if (node.name === 'EmphasisMark' || node.name === 'StrongEmphasisMark' || node.name === 'CodeMark' || node.name === 'LinkMark') {
+				if (node.name === 'EmphasisMark' || node.name === 'StrongEmphasisMark' || node.name === 'StrikethroughMark' || node.name === 'StrikeMark' || node.name === 'CodeMark' || node.name === 'LinkMark') {
 					if (mode === 'current-line' && doc.lineAt(node.from).number === cursorLineNum) return;
 
 					candidates.push({ from: node.from, to: node.to, deco: replaceDeco });

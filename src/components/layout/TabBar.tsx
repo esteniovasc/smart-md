@@ -1,14 +1,25 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Plus } from 'lucide-react';
 import { AnimatePresence } from 'framer-motion';
 import { Tab } from './Tab';
 import { useTabsStore } from '../../stores/useTabsStore';
+import { UnsavedTabModal } from '../ui/UnsavedTabModal';
 
 /**
  * TabBar - Renderiza a lista de abas a partir da store
  */
 export const TabBar = () => {
 	const { tabs, activeTabId, createTab, closeTab, setActiveTab, _hasHydrated } = useTabsStore();
+
+	const [tabToClose, setTabToClose] = useState<{ id: string; title: string } | null>(null);
+
+	const handleCloseTab = (id: string, isModified: boolean, title: string) => {
+		if (isModified) {
+			setTabToClose({ id, title });
+		} else {
+			closeTab(id);
+		}
+	};
 
 	useEffect(() => {
 		// Só cria aba padrão se já carregou do banco (hydration) E não tem nenhuma aba
@@ -66,7 +77,7 @@ export const TabBar = () => {
 								isActive={activeTabId === tab.id}
 								isDirty={tab.isModified}
 								onClick={() => setActiveTab(tab.id)}
-								onClose={() => closeTab(tab.id)}
+								onClose={() => handleCloseTab(tab.id, tab.isModified, tab.title)}
 							/>
 						</div>
 					))}
@@ -84,6 +95,15 @@ export const TabBar = () => {
 					<Plus className="w-4 h-4" strokeWidth={2} />
 				</button>
 			</div>
+
+			<UnsavedTabModal
+				isOpen={!!tabToClose}
+				tabTitle={tabToClose?.title || ''}
+				onClose={() => setTabToClose(null)}
+				onConfirmDiscard={() => {
+					if (tabToClose) closeTab(tabToClose.id);
+				}}
+			/>
 		</div>
 	);
 };
