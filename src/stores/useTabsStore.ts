@@ -23,9 +23,10 @@ export interface TabsState {
 	hiddenRecents: string[];
 	activeTabId: string | null;
 	_hasHydrated: boolean;
+	isFileExplorerOpen: boolean;
 
 	// Actions
-	createTab: (title?: string) => void;
+	createTab: (title?: string, initialContent?: string) => void;
 	closeTab: (id: string) => void;
 	removeRecentFile: (id: string) => void;
 	restoreRecentFile: (id: string) => void;
@@ -42,6 +43,7 @@ export interface TabsState {
 	getActiveTab: () => Tab | undefined;
 	getTabById: (id: string) => Tab | undefined;
 	setHasHydrated: (state: boolean) => void;
+	setIsFileExplorerOpen: (isOpen: boolean) => void;
 }
 
 /**
@@ -71,12 +73,13 @@ export const useTabsStore = create<TabsState>()(
 			hiddenRecents: [],
 			activeTabId: null,
 			_hasHydrated: false,
+			isFileExplorerOpen: false,
 
-			createTab: (title = 'Untitled') => {
+			createTab: (title = 'Untitled', initialContent = '') => {
 				const newTab: Tab = {
 					id: generateId(),
 					title,
-					content: '',
+					content: initialContent,
 					isModified: false,
 					createdAt: Date.now(),
 					updatedAt: Date.now(),
@@ -262,6 +265,10 @@ export const useTabsStore = create<TabsState>()(
 				set({
 					_hasHydrated: state,
 				});
+			},
+
+			setIsFileExplorerOpen: (isOpen: boolean) => {
+				set({ isFileExplorerOpen: isOpen });
 			},
 
 			getTabs: () => get().tabs,

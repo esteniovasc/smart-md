@@ -5,6 +5,7 @@ import { HelpModal } from '../ui/HelpModal';
 import { useTheme } from '../../hooks/useTheme';
 import { TabBar } from './TabBar';
 import { useTabsStore } from '../../stores/useTabsStore';
+import { FileExplorerModal } from './FileExplorerModal';
 
 /**
  * Header - Ilhas flutuantes superiores (3 Ilhas)
@@ -16,6 +17,8 @@ export const Header = () => {
 	const { theme, toggleTheme } = useTheme();
 	const setActiveTab = useTabsStore((s) => s.setActiveTab);
 	const activeTabId = useTabsStore((s) => s.activeTabId);
+	const isFileExplorerOpen = useTabsStore((s) => s.isFileExplorerOpen);
+	const setIsFileExplorerOpen = useTabsStore((s) => s.setIsFileExplorerOpen);
 	const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 	const [isHelpOpen, setIsHelpOpen] = useState(false);
 
@@ -57,7 +60,11 @@ export const Header = () => {
 
 					{/* Ferramentas de Arquivo */}
 					<div className="flex items-center gap-0.5 h-full">
-						<button className={navButtonClass} title="Abrir Projeto">
+						<button 
+							className={navButtonClass} 
+							title="Abrir Projeto"
+							onClick={() => setIsFileExplorerOpen(true)}
+						>
 							<FolderOpen className="w-4 h-4" />
 						</button>
 						<button className={navButtonClass} title="Pesquisar">
@@ -120,6 +127,11 @@ export const Header = () => {
 			<HelpModal
 				isOpen={isHelpOpen}
 				onClose={() => setIsHelpOpen(false)}
+			/>
+
+			<FileExplorerModal
+				isOpen={isFileExplorerOpen}
+				onClose={() => setIsFileExplorerOpen(false)}
 			/>
 		</>
 	);

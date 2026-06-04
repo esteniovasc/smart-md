@@ -1,5 +1,5 @@
 import { motion, type Variants } from 'framer-motion';
-import { FileText, Plus, ArrowRight, X } from 'lucide-react';
+import { FileText, Plus, ArrowRight, X, FolderOpen } from 'lucide-react';
 import { useTabsStore } from '../../stores/useTabsStore';
 
 export const HomeScreen = () => {
@@ -10,6 +10,7 @@ export const HomeScreen = () => {
 	const setActiveTab = useTabsStore((s) => s.setActiveTab);
 	const restoreRecentFile = useTabsStore((s) => s.restoreRecentFile);
 	const removeRecentFile = useTabsStore((s) => s.removeRecentFile);
+	const setIsFileExplorerOpen = useTabsStore((s) => s.setIsFileExplorerOpen);
 
 	const container: Variants = {
 		hidden: { opacity: 0 },
@@ -56,8 +57,8 @@ export const HomeScreen = () => {
 					</p>
 				</motion.div>
 
-				{/* Primary Action */}
-				<motion.div variants={item}>
+				{/* Primary Actions */}
+				<motion.div variants={item} className="flex flex-col sm:flex-row items-center gap-4">
 					<button
 						onClick={() => createTab('Sem título')}
 						className="group relative flex items-center gap-3 px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-medium transition-all duration-300 shadow-lg hover:shadow-blue-500/25 active:scale-95 overflow-hidden select-none"
@@ -65,6 +66,15 @@ export const HomeScreen = () => {
 						<div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
 						<Plus className="w-5 h-5" strokeWidth={2.5} />
 						<span className="text-lg">Criar Nova Nota</span>
+					</button>
+
+					<button
+						onClick={() => setIsFileExplorerOpen(true)}
+						className="group relative flex items-center gap-3 px-8 py-4 bg-amber-500 hover:bg-amber-600 text-white rounded-2xl font-medium transition-all duration-300 shadow-lg hover:shadow-amber-500/25 active:scale-95 overflow-hidden select-none"
+					>
+						<div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
+						<FolderOpen className="w-5 h-5" strokeWidth={2.5} />
+						<span className="text-lg">Abrir Projeto</span>
 					</button>
 				</motion.div>
 
