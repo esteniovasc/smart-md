@@ -4,6 +4,7 @@ import { SettingsModal } from '../ui/SettingsModal';
 import { HelpModal } from '../ui/HelpModal';
 import { useTheme } from '../../hooks/useTheme';
 import { TabBar } from './TabBar';
+import { useTabsStore } from '../../stores/useTabsStore';
 
 /**
  * Header - Ilhas flutuantes superiores (3 Ilhas)
@@ -13,6 +14,8 @@ import { TabBar } from './TabBar';
  */
 export const Header = () => {
 	const { theme, toggleTheme } = useTheme();
+	const setActiveTab = useTabsStore((s) => s.setActiveTab);
+	const activeTabId = useTabsStore((s) => s.activeTabId);
 	const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 	const [isHelpOpen, setIsHelpOpen] = useState(false);
 
@@ -38,10 +41,14 @@ export const Header = () => {
 				<div className="glass-panel rounded-2xl h-14 flex items-center gap-1 p-2 pointer-events-auto border border-white/20 dark:border-white/10 shrink-0">
 					{/* Logo e Home */}
 					<div className="flex items-center pl-2 pr-1 gap-2 h-full">
-						<span className="text-sm font-bold text-slate-800 dark:text-slate-100 hidden xl:block mr-2">
+						<span className="text-sm font-bold text-slate-800 dark:text-slate-100 hidden xl:block mr-2 select-none">
 							Smart MD
 						</span>
-						<button className={navButtonClass} title="Tela Inicial">
+						<button 
+							className={`${navButtonClass} ${activeTabId === null ? 'bg-black/5 dark:bg-white/10 text-slate-900 dark:text-white' : ''}`}
+							onClick={() => setActiveTab(null)}
+							title="Tela Inicial"
+						>
 							<Home className="w-4 h-4" />
 						</button>
 					</div>

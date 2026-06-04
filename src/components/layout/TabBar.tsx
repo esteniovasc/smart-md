@@ -22,13 +22,9 @@ export const TabBar = () => {
 	};
 
 	useEffect(() => {
-		// Só cria aba padrão se já carregou do banco (hydration) E não tem nenhuma aba
+		// Just ensure hydration logic doesn't crash, we no longer auto-create tabs.
 		if (!_hasHydrated) return;
-
-		if (tabs.length === 0) {
-			createTab('Bem-vindo.md');
-		}
-	}, [_hasHydrated, tabs.length, createTab]);
+	}, [_hasHydrated]);
 
 	const tabsRef = useRef<Map<string, HTMLDivElement>>(null);
 
