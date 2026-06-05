@@ -131,15 +131,15 @@ export const defaultCursors = {
 
 export const defaultHotspots = {
 	default: { x: 0, y: 0 },
-	pointer: { x: 0, y: 0 },
+	pointer: { x: 6, y: 0 },
 	text: { x: 12, y: 12 }, // Centro aproximado para 24x24
 	grab: { x: 12, y: 12 },
 	grabbing: { x: 12, y: 12 },
 };
 
 export const defaultEnabledCursors = {
-	default: false,
-	pointer: false,
+	default: true,
+	pointer: true,
 	text: true,
 	grab: true,
 	grabbing: true,

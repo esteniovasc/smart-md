@@ -105,7 +105,7 @@ export const Header = () => {
 									>
 										<Focus className="w-4 h-4" />
 									</button>
-									<button className={navButtonClass} title="Dashboard">
+									<button className={navButtonClass} title="Dashboard" style={{ display: 'none' }}>
 										<LayoutDashboard className="w-4 h-4" />
 									</button>
 								</div>

@@ -101,6 +101,53 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
 				{children}
 			</main>
 
+			{/* Zen Mode Mouse Escape Area */}
+			<AnimatePresence>
+				{isZenMode && (() => {
+					const zenBottomPadding = showStatusBar && showStatusBarInZenMode && statusBarLayout === 'bar' ? 'bottom-14' : 'bottom-10';
+					
+					return (
+						<>
+							{/* Left Escape Area */}
+							<motion.div
+								initial={{ opacity: 0 }}
+								animate={{ opacity: 1 }}
+								exit={{ opacity: 0 }}
+								className={`fixed top-10 ${zenBottomPadding} left-0 w-10 md:w-16 z-[100] group flex flex-col justify-center`}
+							>
+								<button
+									onClick={() => useTabsStore.getState().setIsZenMode(false)}
+									title="Sair do Modo Zen (Esc)"
+									className="absolute left-0 top-0 bottom-0 w-full -translate-x-[120%] group-hover:translate-x-0 transition-transform duration-[400ms] ease-out bg-white/90 dark:bg-zinc-800/90 backdrop-blur-xl rounded-r-2xl shadow-[8px_0_30px_rgb(0,0,0,0.12)] border border-l-0 border-gray-200 dark:border-zinc-700 text-gray-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/20 dark:text-gray-400 dark:hover:text-red-400 cursor-pointer flex flex-col items-center justify-center"
+								>
+									<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+										<path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"/>
+									</svg>
+								</button>
+							</motion.div>
+
+							{/* Right Escape Area */}
+							<motion.div
+								initial={{ opacity: 0 }}
+								animate={{ opacity: 1 }}
+								exit={{ opacity: 0 }}
+								className={`fixed top-10 ${zenBottomPadding} right-0 w-10 md:w-16 z-[100] group flex flex-col justify-center`}
+							>
+								<button
+									onClick={() => useTabsStore.getState().setIsZenMode(false)}
+									title="Sair do Modo Zen (Esc)"
+									className="absolute right-0 top-0 bottom-0 w-full translate-x-[120%] group-hover:translate-x-0 transition-transform duration-[400ms] ease-out bg-white/90 dark:bg-zinc-800/90 backdrop-blur-xl rounded-l-2xl shadow-[-8px_0_30px_rgb(0,0,0,0.12)] border border-r-0 border-gray-200 dark:border-zinc-700 text-gray-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/20 dark:text-gray-400 dark:hover:text-red-400 cursor-pointer flex flex-col items-center justify-center"
+								>
+									<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+										<path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"/>
+									</svg>
+								</button>
+							</motion.div>
+						</>
+					);
+				})()}
+			</AnimatePresence>
+
 			{/* Toast Indicator para Troca de Abas no Zen Mode */}
 			<AnimatePresence mode="wait">
 				{activeToast && isZenMode && (
