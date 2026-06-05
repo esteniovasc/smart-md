@@ -33,6 +33,7 @@ export interface SettingsState {
 	enableStatusColors: boolean;         // Pinta linhas de tarefas (✅, ⚠️)
 	enableHighlightActiveLine: boolean;
 	restoreCursorPosition: boolean;      // Salva/restaura posição do cursor ao trocar abas
+	zenParagraphFocus: boolean;          // Esmaece tudo exceto a linha atual (Zen Mode apenas)
 
 	// List Markers Customization
 	listMarkers: {
@@ -85,6 +86,7 @@ export interface SettingsState {
 	setEnableCustomCursors: (enabled: boolean) => void;
 	setLanguage: (lang: 'pt-BR' | 'en-US') => void;
 	setRestoreCursorPosition: (enabled: boolean) => void;
+	setZenParagraphFocus: (enabled: boolean) => void;
 
 	setListMarkerConfig: (char: '*' | '-' | '+', config: Partial<ListMarkerConfig>) => void;
 
@@ -150,6 +152,7 @@ export const defaultSettings = {
 	enableStatusColors: true,
 	enableHighlightActiveLine: true,
 	restoreCursorPosition: true,
+	zenParagraphFocus: true,
 
 	// Markers Defaults
 	listMarkers: defaultListMarkers,
@@ -222,6 +225,7 @@ export const useSettingsStore = create<SettingsState>()(
 			setEnableCustomCursors: (enableCustomCursors) => set({ enableCustomCursors }),
 			setLanguage: (language) => set({ language }),
 			setRestoreCursorPosition: (restoreCursorPosition) => set({ restoreCursorPosition }),
+			setZenParagraphFocus: (zenParagraphFocus) => set({ zenParagraphFocus }),
 
 			setListMarkerConfig: (char, config) => set((state) => {
 				const current = state.listMarkers[char] || { enabled: true, color: '' };

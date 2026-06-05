@@ -306,4 +306,15 @@ body.dark {
 	.dark .group:hover .custom-scrollbar::-webkit-scrollbar-thumb:hover {
 		background-color: rgba(255, 255, 255, 0.5);
 	}
+
+	/* Zen Mode Paragraph Focus (Máquina de Escrever) */
+	.zen-focus .cm-line:not(.cm-activeLine) {
+		opacity: 0.35;
+		transition: opacity 0.5s ease-in-out;
+	}
+
+	.zen-focus .cm-line.cm-activeLine {
+		opacity: 1 !important;
+		transition: opacity 0.1s ease-out;
+	}
 }

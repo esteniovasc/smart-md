@@ -303,6 +303,7 @@ export const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
 		hotspots,
 		enabledCursors,
 		enableCustomCursors,
+		zenParagraphFocus,
 		// Background
 		appBackgroundColor,
 		editorBackgroundColor,
@@ -315,6 +316,7 @@ export const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
 		setCursorHotspot,
 		setCursorEnabled,
 		setEnableCustomCursors,
+		setZenParagraphFocus,
 		// Background Actions
 		setAppBackgroundColor,
 		setEditorBackgroundColor,
@@ -675,6 +677,21 @@ export const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
 													<Switch
 														checked={enableDynamicBackground}
 														onChange={setEnableDynamicBackground}
+													/>
+												</div>
+
+												<div className="flex items-center justify-between pt-3 border-t border-gray-200 dark:border-zinc-700/50">
+													<div className="space-y-0.5">
+														<label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+															Foco de Parágrafo (Modo Zen)
+														</label>
+														<p className="text-xs text-gray-500 dark:text-gray-400">
+															Esmaece o restante do texto ao entrar no Modo Zen
+														</p>
+													</div>
+													<Switch
+														checked={zenParagraphFocus}
+														onChange={setZenParagraphFocus}
 													/>
 												</div>
 

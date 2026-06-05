@@ -102,10 +102,12 @@ export const Editor = () => {
 	const editorFontSize = useSettingsStore((s) => s.editorFontSize);
 	const setEditorFontSize = useSettingsStore((s) => s.setEditorFontSize);
 	const listMarkers = useSettingsStore((s) => s.listMarkers); // NOVO
+	const zenParagraphFocus = useSettingsStore((s) => s.zenParagraphFocus);
 
 	const tabs = useTabsStore((s) => s.tabs);
 	const activeTabId = useTabsStore((s) => s.activeTabId);
 	const searchTrigger = useTabsStore((s) => s.searchTrigger);
+	const isZenMode = useTabsStore((s) => s.isZenMode);
 	const updateTabContent = useTabsStore((s) => s.updateTabContent);
 	const updateTabSelection = useTabsStore((s) => s.updateTabSelection);
 	const updateTabScroll = useTabsStore((s) => s.updateTabScroll);
@@ -346,11 +348,13 @@ export const Editor = () => {
 		);
 	}
 
+	const shouldHighlightActiveLine = enableHighlightActiveLine || (isZenMode && zenParagraphFocus);
+
 	// Memoize basicSetup to prevent recreating extensions on every render, which closes the search panel
 	const basicSetupConfig = useMemo(() => ({
 		lineNumbers: showLineNumbers,
-		highlightActiveLineGutter: showLineNumbers && enableHighlightActiveLine,
-		highlightActiveLine: enableHighlightActiveLine,
+		highlightActiveLineGutter: showLineNumbers && shouldHighlightActiveLine,
+		highlightActiveLine: shouldHighlightActiveLine,
 		foldGutter: showLineNumbers,
 		dropCursor: true,
 		allowMultipleSelections: true,
@@ -362,10 +366,10 @@ export const Editor = () => {
 		crosshairCursor: false,
 		highlightSelectionMatches: true,
 		searchKeymap: true,
-	}), [showLineNumbers, enableHighlightActiveLine]);
+	}), [showLineNumbers, shouldHighlightActiveLine]);
 
 	return (
-		<div className="h-full w-full overflow-hidden glass-panel relative">
+		<div className={`h-full w-full overflow-hidden glass-panel relative ${isZenMode && zenParagraphFocus ? 'zen-focus' : ''}`}>
 			<CodeMirror
 				key={activeTabId} // FORÇA O REMOUNT AO TROCAR DE ABA (ISOLAMENTO TOTAL)
 				value={activeTab.content}

@@ -25,6 +25,7 @@ export interface TabsState {
 	_hasHydrated: boolean;
 	isFileExplorerOpen: boolean;
 	searchTrigger: number;
+	isZenMode: boolean;
 
 	// Actions
 	createTab: (title?: string, initialContent?: string) => void;
@@ -46,6 +47,7 @@ export interface TabsState {
 	setHasHydrated: (state: boolean) => void;
 	setIsFileExplorerOpen: (isOpen: boolean) => void;
 	triggerSearch: () => void;
+	setIsZenMode: (isZen: boolean) => void;
 }
 
 /**
@@ -77,6 +79,7 @@ export const useTabsStore = create<TabsState>()(
 			_hasHydrated: false,
 			isFileExplorerOpen: false,
 			searchTrigger: 0,
+			isZenMode: false,
 
 			createTab: (title = 'Untitled', initialContent = '') => {
 				const newTab: Tab = {
@@ -276,6 +279,10 @@ export const useTabsStore = create<TabsState>()(
 
 			triggerSearch: () => {
 				set((state) => ({ searchTrigger: state.searchTrigger + 1 }));
+			},
+
+			setIsZenMode: (isZen: boolean) => {
+				set({ isZenMode: isZen });
 			},
 
 			getTabs: () => get().tabs,

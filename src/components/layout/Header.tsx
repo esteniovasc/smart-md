@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Sun, Moon, Settings, HelpCircle, Home, FolderOpen, Search, Eye, LayoutDashboard } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Sun, Moon, Settings, HelpCircle, Home, FolderOpen, Search, Focus, LayoutDashboard } from 'lucide-react';
 import { SettingsModal } from '../ui/SettingsModal';
 import { HelpModal } from '../ui/HelpModal';
 import { useTheme } from '../../hooks/useTheme';
@@ -19,6 +20,8 @@ export const Header = () => {
 	const activeTabId = useTabsStore((s) => s.activeTabId);
 	const isFileExplorerOpen = useTabsStore((s) => s.isFileExplorerOpen);
 	const setIsFileExplorerOpen = useTabsStore((s) => s.setIsFileExplorerOpen);
+	const isZenMode = useTabsStore((s) => s.isZenMode);
+	const setIsZenMode = useTabsStore((s) => s.setIsZenMode);
 	const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 	const [isHelpOpen, setIsHelpOpen] = useState(false);
 
@@ -35,97 +38,131 @@ export const Header = () => {
 		transition-colors cursor-pointer
 	`;
 
+	const transitionSettings = { duration: 0.6, ease: [0.32, 0.72, 0, 1] as const };
+
 	return (
 		<>
 			{/* Container Principal "Fantasma" - Permite clicar através dos gaps */}
 			<header className="fixed top-0 left-0 right-0 z-50 flex items-start justify-between p-6 pointer-events-none gap-4">
 
-				{/* 1. Nav Island: Arquivos e Ferramentas */}
-				<div className="glass-panel rounded-2xl h-14 flex items-center gap-1 p-2 pointer-events-auto border border-white/20 dark:border-white/10 shrink-0">
-					{/* Logo e Home */}
-					<div className="flex items-center pl-2 pr-1 gap-2 h-full">
-						<span className="text-sm font-bold text-slate-800 dark:text-slate-100 hidden xl:block mr-2 select-none">
-							Smart MD
-						</span>
-						<button 
-							className={`${navButtonClass} ${activeTabId === null ? 'bg-black/5 dark:bg-white/10 text-slate-900 dark:text-white' : ''}`}
-							onClick={() => setActiveTab(null)}
-							title="Tela Inicial"
-						>
-							<Home className="w-4 h-4" />
-						</button>
-					</div>
+				<AnimatePresence>
+					{!isZenMode && (
+						<>
+							{/* 1. Nav Island: Arquivos e Ferramentas */}
+							<motion.div
+								initial={{ x: -50, y: -50, opacity: 0 }}
+								animate={{ x: 0, y: 0, opacity: 1 }}
+								exit={{ x: -100, y: -50, opacity: 0 }}
+								transition={transitionSettings}
+								className="glass-panel rounded-2xl h-14 flex items-center gap-1 p-2 pointer-events-auto border border-white/20 dark:border-white/10 shrink-0"
+							>
+								{/* Logo e Home */}
+								<div className="flex items-center pl-2 pr-1 gap-2 h-full">
+									<span className="text-sm font-bold text-slate-800 dark:text-slate-100 hidden xl:block mr-2 select-none">
+										Smart MD
+									</span>
+									<button
+										className={`${navButtonClass} ${activeTabId === null ? 'bg-black/5 dark:bg-white/10 text-slate-900 dark:text-white' : ''}`}
+										onClick={() => setActiveTab(null)}
+										title="Tela Inicial"
+									>
+										<Home className="w-4 h-4" />
+									</button>
+								</div>
 
-					<div className="w-px h-5 bg-black/10 dark:bg-white/10 mx-1" />
+								<div className="w-px h-5 bg-black/10 dark:bg-white/10 mx-1" />
 
-					{/* Ferramentas de Arquivo */}
-					<div className="flex items-center gap-0.5 h-full">
-						<button 
-							className={navButtonClass} 
-							title="Abrir Projeto"
-							onClick={() => setIsFileExplorerOpen(true)}
-						>
-							<FolderOpen className="w-4 h-4" />
-						</button>
-						<button 
-							className={`${navButtonClass} ${!activeTabId ? 'opacity-30 cursor-not-allowed' : ''}`} 
-							title={activeTabId ? "Pesquisar no arquivo (Ctrl+F)" : "Abra um arquivo para pesquisar"}
-							onClick={() => {
-								if (activeTabId) {
-									useTabsStore.getState().triggerSearch();
-								}
-							}}
-							disabled={!activeTabId}
-						>
-							<Search className="w-4 h-4" />
-						</button>
-						<button className={navButtonClass} title="Modo de Visualização">
-							<Eye className="w-4 h-4" />
-						</button>
-						<button className={navButtonClass} title="Dashboard">
-							<LayoutDashboard className="w-4 h-4" />
-						</button>
-					</div>
-				</div>
+								{/* Ferramentas de Arquivo */}
+								<div className="flex items-center gap-0.5 h-full">
+									<button
+										className={navButtonClass}
+										title="Abrir Projeto"
+										onClick={() => setIsFileExplorerOpen(true)}
+									>
+										<FolderOpen className="w-4 h-4" />
+									</button>
+									<button
+										className={`${navButtonClass} ${!activeTabId ? 'opacity-30 cursor-not-allowed' : ''}`}
+										title={activeTabId ? "Pesquisar no arquivo (Ctrl+F)" : "Abra um arquivo para pesquisar"}
+										onClick={() => {
+											if (activeTabId) {
+												useTabsStore.getState().triggerSearch();
+											}
+										}}
+										disabled={!activeTabId}
+									>
+										<Search className="w-4 h-4" />
+									</button>
+									<button
+										className={`${navButtonClass} ${!activeTabId ? 'opacity-30 cursor-not-allowed' : ''}`}
+										title="Modo Zen (Alt + Z)"
+										onClick={() => {
+											if (activeTabId) {
+												setIsZenMode(true);
+											}
+										}}
+										disabled={!activeTabId}
+									>
+										<Focus className="w-4 h-4" />
+									</button>
+									<button className={navButtonClass} title="Dashboard">
+										<LayoutDashboard className="w-4 h-4" />
+									</button>
+								</div>
+							</motion.div>
 
-				{/* 2. Tabs Island: Documentos Ativos */}
-				{/* Flex-1 para ocupar o espaço central, overflow-hidden para conter a TabBar */}
-				<div className="group glass-panel rounded-2xl h-14 flex items-center p-2 pointer-events-auto border border-white/20 dark:border-white/10 flex-1 min-w-0 max-w-4xl mx-auto overflow-hidden relative">
-					<div className="flex-1 overflow-hidden min-w-0 h-full">
-						<TabBar />
-					</div>
-				</div>
+							{/* 2. Tabs Island: Documentos Ativos */}
+							<motion.div
+								initial={{ y: -50, opacity: 0 }}
+								animate={{ y: 0, opacity: 1 }}
+								exit={{ y: -80, opacity: 0 }}
+								transition={transitionSettings}
+								className="group glass-panel rounded-2xl h-14 flex items-center p-2 pointer-events-auto border border-white/20 dark:border-white/10 flex-1 min-w-0 max-w-4xl mx-auto overflow-hidden relative"
+							>
+								<div className="flex-1 overflow-hidden min-w-0 h-full">
+									<TabBar />
+								</div>
+							</motion.div>
 
-				{/* 3. System Island: Configurações e Ajuda */}
-				<div className="glass-panel rounded-2xl h-14 flex items-center gap-1 p-2 pointer-events-auto border border-white/20 dark:border-white/10 shrink-0">
-					<button
-						onClick={() => setIsHelpOpen(!isHelpOpen)}
-						title="Ajuda"
-						className={`${iconButtonClass} ${isHelpOpen ? 'bg-black/5 dark:bg-white/10 text-slate-900 dark:text-white' : ''}`}
-					>
-						<HelpCircle className="w-5 h-5" />
-					</button>
+							{/* 3. System Island: Configurações e Ajuda */}
+							<motion.div
+								initial={{ x: 50, y: -50, opacity: 0 }}
+								animate={{ x: 0, y: 0, opacity: 1 }}
+								exit={{ x: 100, y: -50, opacity: 0 }}
+								transition={transitionSettings}
+								className="glass-panel rounded-2xl h-14 flex items-center gap-1 p-2 pointer-events-auto border border-white/20 dark:border-white/10 shrink-0"
+							>
+								<button
+									onClick={() => setIsHelpOpen(!isHelpOpen)}
+									title="Ajuda"
+									className={`${iconButtonClass} ${isHelpOpen ? 'bg-black/5 dark:bg-white/10 text-slate-900 dark:text-white' : ''}`}
+								>
+									<HelpCircle className="w-5 h-5" />
+								</button>
 
-					<button
-						onClick={() => setIsSettingsOpen(!isSettingsOpen)}
-						title="Configurações"
-						className={`${iconButtonClass} ${isSettingsOpen ? 'bg-black/5 dark:bg-white/10 text-slate-900 dark:text-white' : ''}`}
-					>
-						<Settings className="w-5 h-5" />
-					</button>
+								<button
+									onClick={() => setIsSettingsOpen(!isSettingsOpen)}
+									title="Configurações"
+									className={`${iconButtonClass} ${isSettingsOpen ? 'bg-black/5 dark:bg-white/10 text-slate-900 dark:text-white' : ''}`}
+								>
+									<Settings className="w-5 h-5" />
+								</button>
 
-					<button
-						onClick={toggleTheme}
-						title={theme === 'light' ? 'Ativar modo escuro' : 'Ativar modo claro'}
-						className={iconButtonClass}
-					>
-						{theme === 'light' ? (
-							<Moon className="w-5 h-5" />
-						) : (
-							<Sun className="w-5 h-5" />
-						)}
-					</button>
-				</div>
+								<button
+									onClick={toggleTheme}
+									title={theme === 'light' ? 'Ativar modo escuro' : 'Ativar modo claro'}
+									className={iconButtonClass}
+								>
+									{theme === 'light' ? (
+										<Moon className="w-5 h-5" />
+									) : (
+										<Sun className="w-5 h-5" />
+									)}
+								</button>
+							</motion.div>
+						</>
+					)}
+				</AnimatePresence>
 			</header>
 
 			<SettingsModal
