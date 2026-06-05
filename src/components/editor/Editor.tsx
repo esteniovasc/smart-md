@@ -9,6 +9,7 @@ import { useSettingsStore } from '../../stores/useSettingsStore';
 import { createLivePreviewExtension, livePreviewTheme } from './extensions/livePreview';
 import { statusLinesExtension, statusLinesTheme } from './extensions/statusLines';
 import { createBulletPointsExtension, bulletPointsTheme } from './extensions/bulletPoints';
+import { createTypingEffectExtension } from './extensions/typingEffects';
 import { formattingKeymap } from './extensions/formatting';
 import { SelectionMenu } from './SelectionMenu';
 
@@ -103,6 +104,9 @@ export const Editor = () => {
 	const setEditorFontSize = useSettingsStore((s) => s.setEditorFontSize);
 	const listMarkers = useSettingsStore((s) => s.listMarkers); // NOVO
 	const zenParagraphFocus = useSettingsStore((s) => s.zenParagraphFocus);
+	const typingEffect = useSettingsStore((s) => s.typingEffect);
+	const typingEffectZenOnly = useSettingsStore((s) => s.typingEffectZenOnly);
+	const enableDeleteEffect = useSettingsStore((s) => s.enableDeleteEffect);
 
 	const tabs = useTabsStore((s) => s.tabs);
 	const activeTabId = useTabsStore((s) => s.activeTabId);
@@ -309,8 +313,15 @@ export const Editor = () => {
 		// Visual Bullet Points - Configurable & Smart
 		exts.push(createBulletPointsExtension(listMarkers, isDark), bulletPointsTheme);
 
+		// Typing Effects (Keys Cafe / Power Mode)
+		if (typingEffect !== 'none' || enableDeleteEffect) {
+			if (!typingEffectZenOnly || isZenMode) {
+				exts.push(createTypingEffectExtension(typingEffect, enableDeleteEffect));
+			}
+		}
+
 		return exts;
-	}, [isDark, enableWordWrap, markdownViewMode, enableStatusColors, enableHighlightActiveLine, activeTabId, updateTabSelection, updateTabScroll, editorFontSize, setEditorFontSize, listMarkers]); // Added listMarkers
+	}, [isDark, enableWordWrap, markdownViewMode, enableStatusColors, enableHighlightActiveLine, activeTabId, updateTabSelection, updateTabScroll, editorFontSize, setEditorFontSize, listMarkers, typingEffect, typingEffectZenOnly, enableDeleteEffect, isZenMode]);
 
 	const handleChange = useCallback((value: string, viewUpdate: any) => {
 		if (activeTabId) {

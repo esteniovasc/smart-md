@@ -304,6 +304,9 @@ export const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
 		enabledCursors,
 		enableCustomCursors,
 		zenParagraphFocus,
+		typingEffect,
+		typingEffectZenOnly,
+		enableDeleteEffect,
 		// Background
 		appBackgroundColor,
 		editorBackgroundColor,
@@ -317,6 +320,9 @@ export const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
 		setCursorEnabled,
 		setEnableCustomCursors,
 		setZenParagraphFocus,
+		setTypingEffect,
+		setTypingEffectZenOnly,
+		setEnableDeleteEffect,
 		// Background Actions
 		setAppBackgroundColor,
 		setEditorBackgroundColor,
@@ -680,21 +686,6 @@ export const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
 													/>
 												</div>
 
-												<div className="flex items-center justify-between pt-3 border-t border-gray-200 dark:border-zinc-700/50">
-													<div className="space-y-0.5">
-														<label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-															Foco de Parágrafo (Modo Zen)
-														</label>
-														<p className="text-xs text-gray-500 dark:text-gray-400">
-															Esmaece o restante do texto ao entrar no Modo Zen
-														</p>
-													</div>
-													<Switch
-														checked={zenParagraphFocus}
-														onChange={setZenParagraphFocus}
-													/>
-												</div>
-
 												{/* Spotlight Radius Slider */}
 												<div className={`pt-3 border-t border-gray-200 dark:border-zinc-700/50 transition-opacity duration-200 ${!enableDynamicBackground ? 'opacity-50 pointer-events-none' : ''}`}>
 													<div className="flex justify-between mb-2">
@@ -718,6 +709,73 @@ export const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
 														<span>Focado</span>
 														<span>Disperso</span>
 													</div>
+												</div>
+
+												<div className="flex items-center justify-between pt-3 border-t border-gray-200 dark:border-zinc-700/50">
+													<div className="space-y-0.5">
+														<label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+															Foco de Parágrafo (Modo Zen)
+														</label>
+														<p className="text-xs text-gray-500 dark:text-gray-400">
+															Esmaece o restante do texto ao entrar no Modo Zen
+														</p>
+													</div>
+													<Switch
+														checked={zenParagraphFocus}
+														onChange={setZenParagraphFocus}
+													/>
+												</div>
+												
+												<div className="pt-3 border-t border-gray-200 dark:border-zinc-700/50">
+													<div className="space-y-0.5 mb-3">
+														<label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+															Efeitos de Digitação (Máquina de Escrever)
+														</label>
+														<p className="text-xs text-gray-500 dark:text-gray-400">
+															Adiciona feedback visual tátil ao digitar
+														</p>
+													</div>
+													
+													<SegmentedControl
+														options={[
+															{ value: 'none', label: 'Desativado' },
+															{ value: 'fade', label: 'Letras (Fade)' },
+															{ value: 'impact', label: 'Impacto' },
+															{ value: 'sparks', label: 'Partículas' },
+															{ value: 'stamp', label: 'Carimbo' }
+														]}
+														value={typingEffect}
+														onChange={(v) => setTypingEffect(v as any)}
+													/>
+													
+													{typingEffect !== 'none' && (
+														<div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100 dark:border-zinc-800">
+															<span className="text-xs text-gray-600 dark:text-gray-400">
+																Ativar apenas no Modo Zen
+															</span>
+															<Switch
+																checked={typingEffectZenOnly}
+																onChange={setTypingEffectZenOnly}
+															/>
+														</div>
+													)}
+
+													{typingEffect !== 'none' && (
+														<div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100 dark:border-zinc-800">
+															<div className="space-y-0.5">
+																<span className="text-xs text-gray-600 dark:text-gray-400 font-medium">
+																	Efeito ao Apagar
+																</span>
+																<p className="text-[10px] text-gray-500 dark:text-gray-500">
+																	Exibe estilhaços ao deletar texto
+																</p>
+															</div>
+															<Switch
+																checked={enableDeleteEffect}
+																onChange={setEnableDeleteEffect}
+															/>
+														</div>
+													)}
 												</div>
 											</div>
 										</div>

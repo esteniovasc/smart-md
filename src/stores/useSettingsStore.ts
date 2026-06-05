@@ -34,6 +34,11 @@ export interface SettingsState {
 	enableHighlightActiveLine: boolean;
 	restoreCursorPosition: boolean;      // Salva/restaura posição do cursor ao trocar abas
 	zenParagraphFocus: boolean;          // Esmaece tudo exceto a linha atual (Zen Mode apenas)
+	
+	// Typing Effects (Keys Cafe / Power Mode)
+	typingEffect: 'none' | 'fade' | 'impact' | 'sparks' | 'stamp';
+	typingEffectZenOnly: boolean;
+	enableDeleteEffect: boolean;
 
 	// List Markers Customization
 	listMarkers: {
@@ -87,6 +92,9 @@ export interface SettingsState {
 	setLanguage: (lang: 'pt-BR' | 'en-US') => void;
 	setRestoreCursorPosition: (enabled: boolean) => void;
 	setZenParagraphFocus: (enabled: boolean) => void;
+	setTypingEffect: (effect: 'none' | 'fade' | 'impact' | 'sparks' | 'stamp') => void;
+	setTypingEffectZenOnly: (enabled: boolean) => void;
+	setEnableDeleteEffect: (enabled: boolean) => void;
 
 	setListMarkerConfig: (char: '*' | '-' | '+', config: Partial<ListMarkerConfig>) => void;
 
@@ -153,6 +161,9 @@ export const defaultSettings = {
 	enableHighlightActiveLine: true,
 	restoreCursorPosition: true,
 	zenParagraphFocus: true,
+	typingEffect: 'none' as const,
+	typingEffectZenOnly: true,
+	enableDeleteEffect: true,
 
 	// Markers Defaults
 	listMarkers: defaultListMarkers,
@@ -226,6 +237,9 @@ export const useSettingsStore = create<SettingsState>()(
 			setLanguage: (language) => set({ language }),
 			setRestoreCursorPosition: (restoreCursorPosition) => set({ restoreCursorPosition }),
 			setZenParagraphFocus: (zenParagraphFocus) => set({ zenParagraphFocus }),
+			setTypingEffect: (typingEffect) => set({ typingEffect }),
+			setTypingEffectZenOnly: (typingEffectZenOnly) => set({ typingEffectZenOnly }),
+			setEnableDeleteEffect: (enableDeleteEffect) => set({ enableDeleteEffect }),
 
 			setListMarkerConfig: (char, config) => set((state) => {
 				const current = state.listMarkers[char] || { enabled: true, color: '' };
