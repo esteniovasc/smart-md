@@ -31,6 +31,7 @@ export interface TabsState {
 
 	// Actions
 	createTab: (title?: string, initialContent?: string) => void;
+	createTabWithHandle: (title: string, content: string, handle: any, lastModified: number) => Promise<void>;
 	closeTab: (id: string) => void;
 	removeRecentFile: (id: string) => void;
 	restoreRecentFile: (id: string) => void;
@@ -102,6 +103,37 @@ export const useTabsStore = create<TabsState>()(
 					recentFiles: [newTab, ...state.recentFiles].slice(0, 10),
 					activeTabId: newTab.id,
 				}));
+			},
+
+			createTabWithHandle: async (title: string, content: string, handle: any, lastModified: number) => {
+				const { storeFileHandle } = await import('../utils/fileSystem');
+				const state = get();
+				
+				// Verifica se a aba já está aberta
+				const existingTab = state.tabs.find(t => t.title === title && t.content === content);
+				if (existingTab) {
+					state.setActiveTab(existingTab.id);
+					return;
+				}
+
+				// Cria a aba inicial
+				state.createTab(title, content);
+				
+				// Atualiza de forma assíncrona o estado interno com o handle
+				setTimeout(() => {
+					const newState = get();
+					const newTab = newState.getActiveTab();
+					if (newTab && handle) {
+						set({
+							tabs: newState.tabs.map(t => 
+								t.id === newTab.id 
+									? { ...t, fileHandle: handle, lastModified: lastModified, isModified: false } 
+									: t
+							)
+						});
+						storeFileHandle(newTab.id, handle);
+					}
+				}, 0);
 			},
 
 			closeTab: (id: string) => {

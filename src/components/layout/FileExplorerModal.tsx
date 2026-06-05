@@ -21,7 +21,7 @@ interface Workspace {
 }
 
 export const FileExplorerModal = ({ isOpen, onClose }: FileExplorerModalProps) => {
-	const createTab = useTabsStore((s) => s.createTab);
+	const createTabWithHandle = useTabsStore((s) => s.createTabWithHandle);
 
 	const [view, setView] = useState<'hub' | 'explorer'>('hub');
 	const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
@@ -165,7 +165,7 @@ export const FileExplorerModal = ({ isOpen, onClose }: FileExplorerModalProps) =
 			const file = await fileHandle.getFile();
 			const content = await file.text();
 			
-			createTab(file.name, content);
+			createTabWithHandle(file.name, content, fileHandle, file.lastModified);
 			onClose();
 		} catch (error) {
 			console.log('Seleção de arquivo cancelada', error);
@@ -179,7 +179,7 @@ export const FileExplorerModal = ({ isOpen, onClose }: FileExplorerModalProps) =
 			try {
 				const file = await entry.handle.getFile();
 				const content = await file.text();
-				createTab(entry.name, content);
+				createTabWithHandle(entry.name, content, entry.handle, file.lastModified);
 				onClose();
 			} catch (error) {
 				console.error('Erro ao ler arquivo:', error);

@@ -174,7 +174,7 @@ export const defaultSettings = {
 	enableDeleteEffect: true,
 	showStatusBar: false,
 	showStatusBarInZenMode: false,
-	statusBarLayout: 'pill' as const,
+	statusBarLayout: 'bar' as const,
 
 	// Markers Defaults
 	listMarkers: defaultListMarkers,
