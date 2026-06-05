@@ -211,7 +211,7 @@ interface MenuButtonProps {
 const MenuButton = ({ icon, onClick, title, isActive }: MenuButtonProps) => (
 	<button
 		onClick={onClick}
-		title={title}
+		data-tooltip={title}
 		className={`
 			flex items-center justify-center w-8 h-8 rounded-lg transition-colors cursor-pointer border-none
 			${isActive 

@@ -101,7 +101,7 @@ export const HomeScreen = () => {
 														{file.title}
 													</span>
 													{isOpen && file.isModified && (
-														<span className="w-2 h-2 rounded-full bg-amber-400 shrink-0" title="Alterações não salvas" />
+														<span className="w-2 h-2 rounded-full bg-amber-400 shrink-0" data-tooltip="Alterações não salvas" />
 													)}
 												</div>
 												<ArrowRight className="w-4 h-4 text-slate-300 dark:text-slate-600 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all mr-6" />
@@ -117,7 +117,7 @@ export const HomeScreen = () => {
 												e.stopPropagation();
 												removeRecentFile(file.id);
 											}}
-											title="Remover dos Recentes"
+											data-tooltip="Remover dos Recentes"
 											className="absolute top-3 right-3 p-1.5 rounded-full bg-black/5 dark:bg-white/10 text-slate-500 dark:text-slate-400 opacity-0 group-hover:opacity-100 hover:bg-red-500/20 hover:text-red-500 dark:hover:bg-red-500/30 dark:hover:text-red-400 transition-all"
 										>
 											<X className="w-3.5 h-3.5" strokeWidth={2.5} />

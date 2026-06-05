@@ -223,7 +223,7 @@ export const FileExplorerModal = ({ isOpen, onClose }: FileExplorerModalProps) =
 											setPathStack([]);
 										}}
 										className="p-1.5 rounded-lg text-slate-500 hover:bg-black/5 dark:hover:bg-white/10 transition-colors mr-1"
-										title="Voltar aos Espaços"
+										data-tooltip="Voltar aos Espaços"
 									>
 										<ArrowLeft className="w-5 h-5" />
 									</button>
@@ -304,12 +304,12 @@ export const FileExplorerModal = ({ isOpen, onClose }: FileExplorerModalProps) =
 																<button
 																	onClick={(e) => handleRemoveWorkspace(workspace.name, e)}
 																	className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-md transition-colors opacity-0 group-hover:opacity-100"
-																	title="Remover workspace do histórico"
+																	data-tooltip="Remover workspace do histórico"
 																>
 																	<Trash2 className="w-4 h-4" />
 																</button>
 															</div>
-															<span className="font-semibold text-slate-800 dark:text-white truncate" title={workspace.name}>
+															<span className="font-semibold text-slate-800 dark:text-white truncate" data-tooltip={workspace.name}>
 																{workspace.name}
 															</span>
 															<span className="text-xs text-slate-500 dark:text-slate-400 mt-1">

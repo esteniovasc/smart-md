@@ -85,7 +85,7 @@ export const TabBar = () => {
 				<button
 					type="button"
 					onClick={() => createTab('Sem título')}
-					title="Nova aba"
+					data-tooltip="Nova aba"
 					className="flex items-center justify-center w-8 h-8 rounded-md border-none bg-transparent text-slate-400 cursor-pointer transition-all duration-150 hover:bg-black/5 hover:text-slate-600 dark:hover:bg-white/10 dark:hover:text-slate-300"
 				>
 					<Plus className="w-4 h-4" strokeWidth={2} />

@@ -64,7 +64,7 @@ export const Header = () => {
 									<button
 										className={`${navButtonClass} ${activeTabId === null ? 'bg-black/5 dark:bg-white/10 text-slate-900 dark:text-white' : ''}`}
 										onClick={() => setActiveTab(null)}
-										title="Tela Inicial"
+										data-tooltip="Tela Inicial"
 									>
 										<Home className="w-4 h-4" />
 									</button>
@@ -76,14 +76,14 @@ export const Header = () => {
 								<div className="flex items-center gap-0.5 h-full">
 									<button
 										className={navButtonClass}
-										title="Abrir Projeto"
+										data-tooltip="Abrir Projeto"
 										onClick={() => setIsFileExplorerOpen(true)}
 									>
 										<FolderOpen className="w-4 h-4" />
 									</button>
 									<button
 										className={`${navButtonClass} ${!activeTabId ? 'opacity-30 cursor-not-allowed' : ''}`}
-										title={activeTabId ? "Pesquisar no arquivo (Ctrl+F)" : "Abra um arquivo para pesquisar"}
+										data-tooltip={activeTabId ? "Pesquisar no arquivo (Ctrl+F)" : "Abra um arquivo para pesquisar"}
 										onClick={() => {
 											if (activeTabId) {
 												useTabsStore.getState().triggerSearch();
@@ -95,7 +95,7 @@ export const Header = () => {
 									</button>
 									<button
 										className={`${navButtonClass} ${!activeTabId ? 'opacity-30 cursor-not-allowed' : ''}`}
-										title="Modo Zen (Alt + Z)"
+										data-tooltip="Modo Zen (Alt + Z)"
 										onClick={() => {
 											if (activeTabId) {
 												setIsZenMode(true);
@@ -105,7 +105,7 @@ export const Header = () => {
 									>
 										<Focus className="w-4 h-4" />
 									</button>
-									<button className={navButtonClass} title="Dashboard" style={{ display: 'none' }}>
+									<button className={navButtonClass} data-tooltip="Dashboard" style={{ display: 'none' }}>
 										<LayoutDashboard className="w-4 h-4" />
 									</button>
 								</div>
@@ -134,7 +134,7 @@ export const Header = () => {
 							>
 								<button
 									onClick={() => setIsHelpOpen(!isHelpOpen)}
-									title="Ajuda"
+									data-tooltip="Ajuda"
 									className={`${iconButtonClass} ${isHelpOpen ? 'bg-black/5 dark:bg-white/10 text-slate-900 dark:text-white' : ''}`}
 								>
 									<HelpCircle className="w-5 h-5" />
@@ -142,7 +142,7 @@ export const Header = () => {
 
 								<button
 									onClick={() => setIsSettingsOpen(!isSettingsOpen)}
-									title="Configurações"
+									data-tooltip="Configurações"
 									className={`${iconButtonClass} ${isSettingsOpen ? 'bg-black/5 dark:bg-white/10 text-slate-900 dark:text-white' : ''}`}
 								>
 									<Settings className="w-5 h-5" />
@@ -150,7 +150,7 @@ export const Header = () => {
 
 								<button
 									onClick={toggleTheme}
-									title={theme === 'light' ? 'Ativar modo escuro' : 'Ativar modo claro'}
+									data-tooltip={theme === 'light' ? 'Ativar modo escuro' : 'Ativar modo claro'}
 									className={iconButtonClass}
 								>
 									{theme === 'light' ? (

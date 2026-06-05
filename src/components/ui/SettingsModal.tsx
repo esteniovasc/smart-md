@@ -152,7 +152,7 @@ const ColorPickerWithAlpha = ({
 						<button
 							onClick={handleReset}
 							className="p-2 text-gray-500 hover:text-red-500 transition-colors"
-							title="Restaurar padrão"
+							data-tooltip="Restaurar padrão"
 						>
 							<RotateCcw className="w-4 h-4" />
 						</button>
@@ -636,14 +636,14 @@ export const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
 													<button
 														onClick={() => adjustFontSize(1)}
 														className="flex-1 flex items-center justify-center rounded-t-sm rounded-bx-md bg-gray-100 dark:bg-zinc-800 hover:bg-gray-200 dark:hover:bg-zinc-700 text-gray-600 dark:text-gray-300 transition-colors border-none cursor-pointer"
-														title="Aumentar"
+														data-tooltip="Aumentar"
 													>
 														<Plus className="w-3 h-3" />
 													</button>
 													<button
 														onClick={() => adjustFontSize(-1)}
 														className="flex-1 flex items-center justify-center rounded-b-md rounded-tx-sm bg-gray-100 dark:bg-zinc-800 hover:bg-gray-200 dark:hover:bg-zinc-700 text-gray-600 dark:text-gray-300 transition-colors border-none cursor-pointer"
-														title="Diminuir"
+														data-tooltip="Diminuir"
 													>
 														<Minus className="w-3 h-3" />
 													</button>
@@ -909,7 +909,7 @@ export const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
 														</div>
 
 														{/* Upload Button */}
-														<label className={`flex items-center justify-center w-8 h-8 rounded-md bg-gray-100 dark:bg-zinc-800 hover:bg-gray-200 dark:hover:bg-zinc-700 cursor-pointer transition-colors border-none text-gray-600 dark:text-gray-300 ${!enabledCursors[cursor.id as keyof typeof enabledCursors] ? 'opacity-50 pointer-events-none' : ''}`} title="Alterar ícone">
+														<label className={`flex items-center justify-center w-8 h-8 rounded-md bg-gray-100 dark:bg-zinc-800 hover:bg-gray-200 dark:hover:bg-zinc-700 cursor-pointer transition-colors border-none text-gray-600 dark:text-gray-300 ${!enabledCursors[cursor.id as keyof typeof enabledCursors] ? 'opacity-50 pointer-events-none' : ''}`} data-tooltip="Alterar ícone">
 															<input
 																type="file"
 																className="hidden"

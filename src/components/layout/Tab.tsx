@@ -51,7 +51,7 @@ export const Tab = ({ title, isActive, isDirty, onClick, onClose }: TabProps) =>
 			{isDirty && (
 				<span
 					className="flex-shrink-0 w-1.5 h-1.5 rounded-full bg-amber-400"
-					title="Alterações não salvas"
+					data-tooltip="Alterações não salvas"
 				/>
 			)}
 

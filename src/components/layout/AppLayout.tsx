@@ -2,6 +2,7 @@ import { useEffect, useState, useRef, type ReactNode } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Header } from './Header';
 import { StatusBar } from './StatusBar';
+import { GlobalTooltip } from '../ui/GlobalTooltip';
 import { useTabsStore } from '../../stores/useTabsStore';
 import { useSettingsStore } from '../../stores/useSettingsStore';
 
@@ -117,7 +118,7 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
 							>
 								<button
 									onClick={() => useTabsStore.getState().setIsZenMode(false)}
-									title="Sair do Modo Zen (Esc)"
+									data-tooltip="Sair do Modo Zen (Esc)"
 									className="absolute left-0 top-0 bottom-0 w-full -translate-x-[120%] group-hover:translate-x-0 transition-transform duration-[400ms] ease-out bg-white/90 dark:bg-zinc-800/90 backdrop-blur-xl rounded-r-2xl shadow-[8px_0_30px_rgb(0,0,0,0.12)] border border-l-0 border-gray-200 dark:border-zinc-700 text-gray-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/20 dark:text-gray-400 dark:hover:text-red-400 cursor-pointer flex flex-col items-center justify-center"
 								>
 									<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -135,7 +136,7 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
 							>
 								<button
 									onClick={() => useTabsStore.getState().setIsZenMode(false)}
-									title="Sair do Modo Zen (Esc)"
+									data-tooltip="Sair do Modo Zen (Esc)"
 									className="absolute right-0 top-0 bottom-0 w-full translate-x-[120%] group-hover:translate-x-0 transition-transform duration-[400ms] ease-out bg-white/90 dark:bg-zinc-800/90 backdrop-blur-xl rounded-l-2xl shadow-[-8px_0_30px_rgb(0,0,0,0.12)] border border-r-0 border-gray-200 dark:border-zinc-700 text-gray-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/20 dark:text-gray-400 dark:hover:text-red-400 cursor-pointer flex flex-col items-center justify-center"
 								>
 									<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -164,6 +165,7 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
 				)}
 			</AnimatePresence>
 
+			<GlobalTooltip />
 			<StatusBar />
 		</div>
 	);
