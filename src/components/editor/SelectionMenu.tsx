@@ -144,7 +144,6 @@ export const SelectionMenu = ({ view }: SelectionMenuProps) => {
 	const applyBulletList = () => {
 		if (!view) return;
 		const state = view.state;
-		const selection = state.selection.main;
 		
 		const changes = state.changeByRange(range => {
 			// Encontra a linha atual

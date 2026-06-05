@@ -31,15 +31,6 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
 		window.addEventListener('keydown', handleKeyDown);
 		return () => window.removeEventListener('keydown', handleKeyDown);
 	}, [tabs, setActiveTab]);
-
-	const iconButtonClass = `
-		flex items-center justify-center w-10 h-10 rounded-xl
-		text-slate-400 dark:text-slate-500
-		hover:bg-black/5 hover:text-slate-700 
-		dark:hover:bg-white/10 dark:hover:text-slate-200
-		transition-colors cursor-pointer border-none bg-transparent
-	`;
-
 	return (
 		<div className="min-h-screen w-full bg-transparent font-sans">
 			<Header />

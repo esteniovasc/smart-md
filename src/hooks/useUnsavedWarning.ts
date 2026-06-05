@@ -5,11 +5,8 @@ import { useTabsStore } from '../stores/useTabsStore';
  * Hook to prevent accidental closing of the tab/window when there are unsaved changes.
  */
 export function useUnsavedWarning() {
-	// Assinamos o estado para saber se há alguma aba com isModified === true
-	// Usamos selector para não re-renderizar desnecessariamente o App inteiro
-	const hasUnsavedChanges = useTabsStore((state) => 
-		state.tabs.some((tab) => tab.isModified)
-	);
+	// Assinamos o estado para que o hook perceba as mudanças e o componente que o usa seja re-renderizado
+	useTabsStore((state) => state.tabs.some((tab) => tab.isModified));
 
 	useEffect(() => {
 		const handleBeforeUnload = (event: BeforeUnloadEvent) => {

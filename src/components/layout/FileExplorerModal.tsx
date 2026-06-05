@@ -26,7 +26,6 @@ export const FileExplorerModal = ({ isOpen, onClose }: FileExplorerModalProps) =
 	const [view, setView] = useState<'hub' | 'explorer'>('hub');
 	const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
 	
-	const [rootHandle, setRootHandle] = useState<any | null>(null);
 	const [pathStack, setPathStack] = useState<{ handle: any; name: string }[]>([]);
 	const [entries, setEntries] = useState<ExplorerEntry[]>([]);
 	
@@ -110,7 +109,6 @@ export const FileExplorerModal = ({ isOpen, onClose }: FileExplorerModalProps) =
 			}
 			
 			// Enter the new workspace directly
-			setRootHandle(dirHandle);
 			setPathStack([{ handle: dirHandle, name: dirHandle.name }]);
 			setView('explorer');
 		} catch (error: any) {
@@ -132,14 +130,12 @@ export const FileExplorerModal = ({ isOpen, onClose }: FileExplorerModalProps) =
 			setErrorMsg(null);
 			const perm = await workspace.handle.queryPermission({ mode: 'read' });
 			if (perm === 'granted') {
-				setRootHandle(workspace.handle);
 				setPathStack([{ handle: workspace.handle, name: workspace.name }]);
 				setView('explorer');
 			} else {
 				// Request permission
 				const requestPerm = await workspace.handle.requestPermission({ mode: 'read' });
 				if (requestPerm === 'granted') {
-					setRootHandle(workspace.handle);
 					setPathStack([{ handle: workspace.handle, name: workspace.name }]);
 					setView('explorer');
 				} else {
@@ -224,7 +220,6 @@ export const FileExplorerModal = ({ isOpen, onClose }: FileExplorerModalProps) =
 									<button
 										onClick={() => {
 											setView('hub');
-											setRootHandle(null);
 											setPathStack([]);
 										}}
 										className="p-1.5 rounded-lg text-slate-500 hover:bg-black/5 dark:hover:bg-white/10 transition-colors mr-1"
