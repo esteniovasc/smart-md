@@ -5,13 +5,33 @@ import { GlassButton } from './GlassButton';
 interface UnsavedTabModalProps {
 	isOpen: boolean;
 	tabTitle: string;
+	tabId: string | null;
 	onClose: () => void;
 	onConfirmDiscard: () => void;
 }
 
 import { createPortal } from 'react-dom';
 
-export const UnsavedTabModal = ({ isOpen, tabTitle, onClose, onConfirmDiscard }: UnsavedTabModalProps) => {
+import { useTabsStore } from '../../stores/useTabsStore';
+import { useState } from 'react';
+
+export const UnsavedTabModal = ({ isOpen, tabTitle, tabId, onClose, onConfirmDiscard }: UnsavedTabModalProps) => {
+	const [isSaving, setIsSaving] = useState(false);
+
+	const handleSave = async () => {
+		if (!tabId) return;
+		setIsSaving(true);
+		try {
+			const success = await useTabsStore.getState().saveTabFile(tabId);
+			if (success) {
+				onConfirmDiscard(); // Close the tab
+				onClose(); // Close the modal
+			}
+		} finally {
+			setIsSaving(false);
+		}
+	};
+
 	return createPortal(
 		<AnimatePresence>
 			{isOpen && (
@@ -69,11 +89,11 @@ export const UnsavedTabModal = ({ isOpen, tabTitle, onClose, onConfirmDiscard }:
 							</GlassButton>
 							
 							<GlassButton
-								disabled={true}
-								title="O salvamento local ainda não está implementado"
-								className="opacity-50 cursor-not-allowed"
+								onClick={handleSave}
+								disabled={isSaving}
+								className="text-primary-600 dark:text-primary-400 bg-primary-500/10 hover:bg-primary-500/20"
 							>
-								Salvar
+								{isSaving ? 'Salvando...' : 'Salvar e Fechar'}
 							</GlassButton>
 
 							<GlassButton

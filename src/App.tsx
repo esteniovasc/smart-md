@@ -12,6 +12,7 @@ import { usePageTitle } from './hooks/usePageTitle';
 
 import { useBackground } from './hooks/useBackground';
 import { useUnsavedWarning } from './hooks/useUnsavedWarning';
+import { useFileSystem } from './hooks/useFileSystem';
 import { HomeScreen } from './components/layout/HomeScreen';
 import { useTabsStore } from './stores/useTabsStore';
 
@@ -26,6 +27,7 @@ export default function App() {
 	usePageTitle();
 	useBackground();
 	useUnsavedWarning();
+	useFileSystem();
 
 	const activeTabId = useTabsStore((s) => s.activeTabId);
 	const _hasHydrated = useTabsStore((s) => s._hasHydrated);

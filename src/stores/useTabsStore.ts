@@ -15,6 +15,8 @@ export interface Tab {
 		head: number;
 	};
 	scrollPosition?: number;
+	fileHandle?: any; // FileSystemFileHandle
+	lastModified?: number; // timestamp
 }
 
 export interface TabsState {
@@ -48,6 +50,10 @@ export interface TabsState {
 	setIsFileExplorerOpen: (isOpen: boolean) => void;
 	triggerSearch: () => void;
 	setIsZenMode: (isZen: boolean) => void;
+	hydrateHandles: () => Promise<void>;
+	openLocalFile: () => Promise<void>;
+	saveActiveFile: () => Promise<void>;
+	saveTabFile: (id: string) => Promise<boolean>;
 }
 
 /**
@@ -285,6 +291,84 @@ export const useTabsStore = create<TabsState>()(
 				set({ isZenMode: isZen });
 			},
 
+			hydrateHandles: async () => {
+				const { getStoredFileHandle } = await import('../utils/fileSystem');
+				const state = get();
+				const updatedTabs = await Promise.all(
+					state.tabs.map(async (tab) => {
+						const handle = await getStoredFileHandle(tab.id);
+						return handle ? { ...tab, fileHandle: handle } : tab;
+					})
+				);
+				set({ tabs: updatedTabs });
+			},
+
+			openLocalFile: async () => {
+				const { openFilePicker, storeFileHandle } = await import('../utils/fileSystem');
+				const fileData = await openFilePicker();
+				if (!fileData) return;
+
+				const state = get();
+				const existingTab = state.tabs.find(t => t.title === fileData.title && t.content === fileData.content);
+				if (existingTab) {
+					state.setActiveTab(existingTab.id);
+					return;
+				}
+
+				state.createTab(fileData.title, fileData.content);
+				
+				setTimeout(() => {
+					const newState = get();
+					const newTab = newState.getActiveTab();
+					if (newTab && fileData.handle) {
+						set({
+							tabs: newState.tabs.map(t => t.id === newTab.id ? { ...t, fileHandle: fileData.handle, lastModified: fileData.lastModified } : t)
+						});
+						storeFileHandle(newTab.id, fileData.handle);
+					}
+				}, 0);
+			},
+
+			saveActiveFile: async () => {
+				const activeTab = get().getActiveTab();
+				if (activeTab) {
+					await get().saveTabFile(activeTab.id);
+				}
+			},
+
+			saveTabFile: async (id: string) => {
+				const { saveFile, storeFileHandle } = await import('../utils/fileSystem');
+				const state = get();
+				const tab = state.getTabById(id);
+				if (!tab) return false;
+
+				const result = await saveFile(tab.content, tab.fileHandle, tab.title);
+				if (result.success) {
+					const newTabs = get().tabs.map(t => {
+						if (t.id === tab.id) {
+							const updatedTab = { ...t, isModified: false, updatedAt: Date.now() };
+							if (result.handle) {
+								updatedTab.fileHandle = result.handle;
+								storeFileHandle(t.id, result.handle);
+							}
+							if (result.lastModified) {
+								updatedTab.lastModified = result.lastModified;
+							}
+							if (result.handle && tab.title === 'Sem título') {
+								result.handle.getFile().then((file: File) => {
+									get().updateTabTitle(tab.id, file.name);
+								});
+							}
+							return updatedTab;
+						}
+						return t;
+					});
+					set({ tabs: newTabs });
+					return true;
+				}
+				return false;
+			},
+
 			getTabs: () => get().tabs,
 			getActiveTab: () => {
 				const { tabs, activeTabId } = get();
@@ -298,13 +382,22 @@ export const useTabsStore = create<TabsState>()(
 			name: 'smart-md-tabs',
 			storage: createJSONStorage(() => storage),
 			partialize: (state) => ({
-				tabs: state.tabs,
+				tabs: state.tabs.map(tab => {
+					const { fileHandle, ...rest } = tab;
+					return rest;
+				}),
 				activeTabId: state.activeTabId,
-				recentFiles: state.recentFiles,
+				recentFiles: state.recentFiles.map(tab => {
+					const { fileHandle, ...rest } = tab;
+					return rest;
+				}),
 				hiddenRecents: state.hiddenRecents,
 			}),
 			onRehydrateStorage: () => (state) => {
-				state?.setHasHydrated(true);
+				if (state) {
+					state.setHasHydrated(true);
+					state.hydrateHandles();
+				}
 			},
 		}
 	)

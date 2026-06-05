@@ -95,6 +95,7 @@ export const TabBar = () => {
 			<UnsavedTabModal
 				isOpen={!!tabToClose}
 				tabTitle={tabToClose?.title || ''}
+				tabId={tabToClose?.id || null}
 				onClose={() => setTabToClose(null)}
 				onConfirmDiscard={() => {
 					if (tabToClose) closeTab(tabToClose.id);

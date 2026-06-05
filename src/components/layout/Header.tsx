@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Sun, Moon, Settings, HelpCircle, Home, FolderOpen, Search, Focus, LayoutDashboard } from 'lucide-react';
+import { Sun, Moon, Settings, HelpCircle, Home, FolderOpen, Search, Focus, LayoutDashboard, Save, FileUp } from 'lucide-react';
 import { SettingsModal } from '../ui/SettingsModal';
 import { HelpModal } from '../ui/HelpModal';
 import { useTheme } from '../../hooks/useTheme';
@@ -76,10 +76,29 @@ export const Header = () => {
 								<div className="flex items-center gap-0.5 h-full">
 									<button
 										className={navButtonClass}
-										data-tooltip="Abrir Projeto"
+										data-tooltip="Espaços de Trabalho"
 										onClick={() => setIsFileExplorerOpen(true)}
 									>
 										<FolderOpen className="w-4 h-4" />
+									</button>
+									<button
+										className={navButtonClass}
+										data-tooltip="Abrir Arquivo (Ctrl+O)"
+										onClick={() => useTabsStore.getState().openLocalFile()}
+									>
+										<FileUp className="w-4 h-4" />
+									</button>
+									<button
+										className={`${navButtonClass} ${!activeTabId ? 'opacity-30 cursor-not-allowed' : ''}`}
+										data-tooltip="Salvar Arquivo (Ctrl+S)"
+										onClick={() => {
+											if (activeTabId) {
+												useTabsStore.getState().saveActiveFile();
+											}
+										}}
+										disabled={!activeTabId}
+									>
+										<Save className="w-4 h-4" />
 									</button>
 									<button
 										className={`${navButtonClass} ${!activeTabId ? 'opacity-30 cursor-not-allowed' : ''}`}
