@@ -24,6 +24,7 @@ export interface TabsState {
 	activeTabId: string | null;
 	_hasHydrated: boolean;
 	isFileExplorerOpen: boolean;
+	searchTrigger: number;
 
 	// Actions
 	createTab: (title?: string, initialContent?: string) => void;
@@ -44,6 +45,7 @@ export interface TabsState {
 	getTabById: (id: string) => Tab | undefined;
 	setHasHydrated: (state: boolean) => void;
 	setIsFileExplorerOpen: (isOpen: boolean) => void;
+	triggerSearch: () => void;
 }
 
 /**
@@ -74,6 +76,7 @@ export const useTabsStore = create<TabsState>()(
 			activeTabId: null,
 			_hasHydrated: false,
 			isFileExplorerOpen: false,
+			searchTrigger: 0,
 
 			createTab: (title = 'Untitled', initialContent = '') => {
 				const newTab: Tab = {
@@ -269,6 +272,10 @@ export const useTabsStore = create<TabsState>()(
 
 			setIsFileExplorerOpen: (isOpen: boolean) => {
 				set({ isFileExplorerOpen: isOpen });
+			},
+
+			triggerSearch: () => {
+				set((state) => ({ searchTrigger: state.searchTrigger + 1 }));
 			},
 
 			getTabs: () => get().tabs,

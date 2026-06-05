@@ -67,7 +67,16 @@ export const Header = () => {
 						>
 							<FolderOpen className="w-4 h-4" />
 						</button>
-						<button className={navButtonClass} title="Pesquisar">
+						<button 
+							className={`${navButtonClass} ${!activeTabId ? 'opacity-30 cursor-not-allowed' : ''}`} 
+							title={activeTabId ? "Pesquisar no arquivo (Ctrl+F)" : "Abra um arquivo para pesquisar"}
+							onClick={() => {
+								if (activeTabId) {
+									useTabsStore.getState().triggerSearch();
+								}
+							}}
+							disabled={!activeTabId}
+						>
 							<Search className="w-4 h-4" />
 						</button>
 						<button className={navButtonClass} title="Modo de Visualização">

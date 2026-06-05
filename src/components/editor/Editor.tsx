@@ -2,6 +2,8 @@ import { useMemo, useCallback, useRef, useEffect, useState } from 'react';
 import CodeMirror, { EditorView, keymap } from '@uiw/react-codemirror';
 import { markdown } from '@codemirror/lang-markdown';
 import { Strikethrough } from '@lezer/markdown';
+import { openSearchPanel } from '@codemirror/search';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useTabsStore } from '../../stores/useTabsStore';
 import { useSettingsStore } from '../../stores/useSettingsStore';
 import { createLivePreviewExtension, livePreviewTheme } from './extensions/livePreview';
@@ -103,6 +105,7 @@ export const Editor = () => {
 
 	const tabs = useTabsStore((s) => s.tabs);
 	const activeTabId = useTabsStore((s) => s.activeTabId);
+	const searchTrigger = useTabsStore((s) => s.searchTrigger);
 	const updateTabContent = useTabsStore((s) => s.updateTabContent);
 	const updateTabSelection = useTabsStore((s) => s.updateTabSelection);
 	const updateTabScroll = useTabsStore((s) => s.updateTabScroll);
@@ -117,11 +120,39 @@ export const Editor = () => {
 	const [view, setView] = useState<EditorView | null>(null);
 	// Ref redundante para acesso síncrono em callbacks/listeners sem re-render excessivo (opcional, mas bom pra guards)
 	const viewRef = useRef<EditorView | null>(null);
+	const [showSearchSpotlight, setShowSearchSpotlight] = useState(false);
+	const lastSearchTrigger = useRef(searchTrigger);
 
 	// Atualiza refs quando o state muda
 	useEffect(() => {
 		viewRef.current = view;
 	}, [view]);
+
+	// Efeito para disparar a pesquisa via Header ou Ctrl+F
+	useEffect(() => {
+		if (searchTrigger > lastSearchTrigger.current && view) {
+			lastSearchTrigger.current = searchTrigger;
+			openSearchPanel(view);
+			setShowSearchSpotlight(true);
+			const timer = setTimeout(() => setShowSearchSpotlight(false), 1200);
+			return () => clearTimeout(timer);
+		}
+	}, [searchTrigger, view]);
+
+	// Interceptador global de Ctrl+F (apenas quando o Editor estiver montado)
+	useEffect(() => {
+		const handleKeyDown = (e: KeyboardEvent) => {
+			if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'f') {
+				e.preventDefault();
+				// Ao invés de deixar o navegador ou o CodeMirror abrirem secos,
+				// chamamos nosso trigger centralizado para ativar o spotlight junto!
+				useTabsStore.getState().triggerSearch();
+			}
+		};
+
+		window.addEventListener('keydown', handleKeyDown);
+		return () => window.removeEventListener('keydown', handleKeyDown);
+	}, []);
 
 	// Efeito para restaurar foco, cursor e scroll de forma SEMÂNTICA
 	// Agora depende de 'view', então roda garantidamente APÓS o mount do CodeMirror
@@ -315,8 +346,26 @@ export const Editor = () => {
 		);
 	}
 
+	// Memoize basicSetup to prevent recreating extensions on every render, which closes the search panel
+	const basicSetupConfig = useMemo(() => ({
+		lineNumbers: showLineNumbers,
+		highlightActiveLineGutter: showLineNumbers && enableHighlightActiveLine,
+		highlightActiveLine: enableHighlightActiveLine,
+		foldGutter: showLineNumbers,
+		dropCursor: true,
+		allowMultipleSelections: true,
+		indentOnInput: true,
+		bracketMatching: true,
+		closeBrackets: true,
+		autocompletion: false,
+		rectangularSelection: true,
+		crosshairCursor: false,
+		highlightSelectionMatches: true,
+		searchKeymap: true,
+	}), [showLineNumbers, enableHighlightActiveLine]);
+
 	return (
-		<div className="h-full w-full overflow-hidden glass-panel">
+		<div className="h-full w-full overflow-hidden glass-panel relative">
 			<CodeMirror
 				key={activeTabId} // FORÇA O REMOUNT AO TROCAR DE ABA (ISOLAMENTO TOTAL)
 				value={activeTab.content}
@@ -324,25 +373,23 @@ export const Editor = () => {
 				onCreateEditor={handleCreateEditor}
 				extensions={extensions}
 				autoFocus={true}
-				basicSetup={{
-					lineNumbers: showLineNumbers,
-					highlightActiveLineGutter: showLineNumbers && enableHighlightActiveLine,
-					highlightActiveLine: enableHighlightActiveLine,
-					foldGutter: showLineNumbers,
-					dropCursor: true,
-					allowMultipleSelections: true,
-					indentOnInput: true,
-					bracketMatching: true,
-					closeBrackets: true,
-					autocompletion: false,
-					rectangularSelection: true,
-					crosshairCursor: false,
-					highlightSelectionMatches: true,
-					searchKeymap: true,
-				}}
+				basicSetup={basicSetupConfig}
 				className="h-full text-slate-800 dark:text-gray-100"
 			/>
 			<SelectionMenu view={view} />
+
+			{/* Spotlight Animation for Search */}
+			<AnimatePresence>
+				{showSearchSpotlight && (
+					<motion.div
+						initial={{ opacity: 0, scale: 0.5, x: -30, y: 30 }}
+						animate={{ opacity: 1, scale: 1.2, x: 0, y: 0 }}
+						exit={{ opacity: 0, scale: 1.5, filter: "blur(15px)" }}
+						transition={{ duration: 0.3, ease: "easeOut" }}
+						className="absolute bottom-2 left-4 w-96 h-15 bg-amber-400/40 dark:bg-amber-500/30 rounded-full blur-[20px] pointer-events-none z-10"
+					/>
+				)}
+			</AnimatePresence>
 		</div>
 	);
 };
