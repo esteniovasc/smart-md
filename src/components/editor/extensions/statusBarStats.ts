@@ -1,5 +1,5 @@
 import { EditorView } from '@codemirror/view';
-import { useStatusBarStore } from '../../stores/useStatusBarStore';
+import { useStatusBarStore } from '../../../stores/useStatusBarStore';
 
 export const statusBarExtension = EditorView.updateListener.of((update) => {
 	// Only run if the document or selection changed
