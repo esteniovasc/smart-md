@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Header } from './Header';
 import { StatusBar } from './StatusBar';
 import { GlobalTooltip } from '../ui/GlobalTooltip';
+import { InstallPrompt } from '../ui/InstallPrompt';
 import { useTabsStore } from '../../stores/useTabsStore';
 import { useSettingsStore } from '../../stores/useSettingsStore';
 
@@ -166,6 +167,7 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
 			</AnimatePresence>
 
 			<GlobalTooltip />
+			<InstallPrompt />
 			<StatusBar />
 		</div>
 	);

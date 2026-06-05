@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, GripHorizontal, Book, Keyboard, Info, ArrowLeft, Github, Heart } from 'lucide-react';
+import { X, GripHorizontal, Book, Keyboard, Info, ArrowLeft, Github, Heart, DownloadCloud } from 'lucide-react';
+import { usePWA } from '../../hooks/usePWA';
 
 interface HelpModalProps {
 	isOpen: boolean;
@@ -12,6 +13,7 @@ type ViewType = 'menu' | 'tutorial' | 'shortcuts' | 'about';
 export const HelpModal = ({ isOpen, onClose }: HelpModalProps) => {
 	const constraintsRef = useRef<HTMLDivElement>(null);
 	const [activeView, setActiveView] = useState<ViewType>('menu');
+	const { isInstallable, installApp } = usePWA();
 
 	const handleClose = () => {
 		onClose();
@@ -111,6 +113,18 @@ export const HelpModal = ({ isOpen, onClose }: HelpModalProps) => {
 													<div className="text-xs text-slate-500 dark:text-slate-400">Autores, contribuição e versão</div>
 												</div>
 											</button>
+
+											{isInstallable && (
+												<button onClick={installApp} className="flex items-center gap-3 p-3 rounded-lg bg-indigo-500/10 border border-indigo-500/20 hover:bg-indigo-500/20 transition-colors text-left cursor-pointer mt-2">
+													<div className="p-2 rounded-md bg-indigo-500 text-white shadow-lg shadow-indigo-500/30">
+														<DownloadCloud className="w-4 h-4" />
+													</div>
+													<div>
+														<div className="text-sm font-medium text-indigo-700 dark:text-indigo-300">Instalar Smart MD</div>
+														<div className="text-xs text-indigo-600/70 dark:text-indigo-400/70">Acesse como um app nativo</div>
+													</div>
+												</button>
+											)}
 										</motion.div>
 									)}
 
@@ -203,7 +217,7 @@ export const HelpModal = ({ isOpen, onClose }: HelpModalProps) => {
 
 							{activeView === 'menu' && (
 								<div className="text-xs text-center text-slate-400 pb-4">
-									Smart MD v0.1.0 • Early Access
+									Versão Alpha • Acesso antecipado
 								</div>
 							)}
 						</div>

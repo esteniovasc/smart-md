@@ -11,6 +11,10 @@ export default defineConfig({
 		VitePWA({
 			registerType: 'autoUpdate',
 			injectRegister: 'auto',
+			devOptions: {
+				enabled: true,
+				type: 'module',
+			},
 			strategies: 'generateSW', // Offline-first SPA: tudo pré-cacheado após o primeiro load
 			workbox: {
 				globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2,ttf,eot}'],
@@ -57,19 +61,7 @@ export default defineConfig({
 						src: '/icon-512.png',
 						sizes: '512x512',
 						type: 'image/png',
-						purpose: 'any',
-					},
-					{
-						src: '/icon-192-maskable.png',
-						sizes: '192x192',
-						type: 'image/png',
-						purpose: 'maskable',
-					},
-					{
-						src: '/icon-512-maskable.png',
-						sizes: '512x512',
-						type: 'image/png',
-						purpose: 'maskable',
+						purpose: 'any maskable',
 					},
 				],
 				categories: ['productivity'],
