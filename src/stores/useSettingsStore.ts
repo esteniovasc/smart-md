@@ -34,11 +34,16 @@ export interface SettingsState {
 	enableHighlightActiveLine: boolean;
 	restoreCursorPosition: boolean;      // Salva/restaura posição do cursor ao trocar abas
 	zenParagraphFocus: boolean;          // Esmaece tudo exceto a linha atual (Zen Mode apenas)
-	
+
 	// Typing Effects (Keys Cafe / Power Mode)
 	typingEffect: 'none' | 'fade' | 'impact' | 'sparks' | 'stamp';
 	typingEffectZenOnly: boolean;
 	enableDeleteEffect: boolean;
+
+	// Status Bar
+	showStatusBar: boolean;
+	showStatusBarInZenMode: boolean;
+	statusBarLayout: 'bar' | 'pill';
 
 	// List Markers Customization
 	listMarkers: {
@@ -95,6 +100,9 @@ export interface SettingsState {
 	setTypingEffect: (effect: 'none' | 'fade' | 'impact' | 'sparks' | 'stamp') => void;
 	setTypingEffectZenOnly: (enabled: boolean) => void;
 	setEnableDeleteEffect: (enabled: boolean) => void;
+	setShowStatusBar: (enabled: boolean) => void;
+	setShowStatusBarInZenMode: (enabled: boolean) => void;
+	setStatusBarLayout: (layout: 'bar' | 'pill') => void;
 
 	setListMarkerConfig: (char: '*' | '-' | '+', config: Partial<ListMarkerConfig>) => void;
 
@@ -164,6 +172,9 @@ export const defaultSettings = {
 	typingEffect: 'none' as const,
 	typingEffectZenOnly: true,
 	enableDeleteEffect: true,
+	showStatusBar: false,
+	showStatusBarInZenMode: false,
+	statusBarLayout: 'pill' as const,
 
 	// Markers Defaults
 	listMarkers: defaultListMarkers,
@@ -240,6 +251,9 @@ export const useSettingsStore = create<SettingsState>()(
 			setTypingEffect: (typingEffect) => set({ typingEffect }),
 			setTypingEffectZenOnly: (typingEffectZenOnly) => set({ typingEffectZenOnly }),
 			setEnableDeleteEffect: (enableDeleteEffect) => set({ enableDeleteEffect }),
+			setShowStatusBar: (showStatusBar) => set({ showStatusBar }),
+			setShowStatusBarInZenMode: (showStatusBarInZenMode) => set({ showStatusBarInZenMode }),
+			setStatusBarLayout: (statusBarLayout) => set({ statusBarLayout }),
 
 			setListMarkerConfig: (char, config) => set((state) => {
 				const current = state.listMarkers[char] || { enabled: true, color: '' };

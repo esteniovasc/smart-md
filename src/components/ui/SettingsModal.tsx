@@ -307,6 +307,9 @@ export const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
 		typingEffect,
 		typingEffectZenOnly,
 		enableDeleteEffect,
+		showStatusBar,
+		showStatusBarInZenMode,
+		statusBarLayout,
 		// Background
 		appBackgroundColor,
 		editorBackgroundColor,
@@ -323,6 +326,9 @@ export const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
 		setTypingEffect,
 		setTypingEffectZenOnly,
 		setEnableDeleteEffect,
+		setShowStatusBar,
+		setShowStatusBarInZenMode,
+		setStatusBarLayout,
 		// Background Actions
 		setAppBackgroundColor,
 		setEditorBackgroundColor,
@@ -775,6 +781,48 @@ export const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
 																onChange={setEnableDeleteEffect}
 															/>
 														</div>
+													)}
+												</div>
+
+												<div className="pt-3 border-t border-gray-200 dark:border-zinc-700/50">
+													<div className="flex items-center justify-between mb-3">
+														<div className="space-y-0.5">
+															<label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+																Barra de Status
+															</label>
+															<p className="text-xs text-gray-500 dark:text-gray-400">
+																Exibe estatísticas como Linha, Coluna e Caracteres
+															</p>
+														</div>
+														<Switch
+															checked={showStatusBar}
+															onChange={setShowStatusBar}
+														/>
+													</div>
+													
+													{showStatusBar && (
+														<>
+															<div className="mb-3">
+																<SegmentedControl
+																	options={[
+																		{ value: 'bar', label: 'Barra Fixa' },
+																		{ value: 'pill', label: 'Pílula Flutuante' }
+																	]}
+																	value={statusBarLayout}
+																	onChange={(v) => setStatusBarLayout(v as any)}
+																/>
+															</div>
+
+															<div className="flex items-center justify-between pt-3 border-t border-gray-100 dark:border-zinc-800">
+																<span className="text-xs text-gray-600 dark:text-gray-400">
+																	Mostrar também no Modo Zen
+																</span>
+																<Switch
+																	checked={showStatusBarInZenMode}
+																	onChange={setShowStatusBarInZenMode}
+																/>
+															</div>
+														</>
 													)}
 												</div>
 											</div>

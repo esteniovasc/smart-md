@@ -1,7 +1,9 @@
 import { useEffect, useState, useRef, type ReactNode } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Header } from './Header';
+import { StatusBar } from './StatusBar';
 import { useTabsStore } from '../../stores/useTabsStore';
+import { useSettingsStore } from '../../stores/useSettingsStore';
 
 interface AppLayoutProps {
 	children: ReactNode;
@@ -12,6 +14,11 @@ interface AppLayoutProps {
  * Gerencia o posicionamento das Docks laterais e o espaço central
  */
 export const AppLayout = ({ children }: AppLayoutProps) => {
+	const {
+		showStatusBar,
+		showStatusBarInZenMode,
+		statusBarLayout
+	} = useSettingsStore();
 	const tabs = useTabsStore((s) => s.tabs);
 	const setActiveTab = useTabsStore((s) => s.setActiveTab);
 	const isZenMode = useTabsStore((s) => s.isZenMode);
@@ -82,7 +89,10 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
 				className={`
 					absolute inset-0 
 					transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)]
-					${isZenMode ? 'pt-10 pb-10 px-8 md:px-16 lg:px-24 xl:px-32' : 'pt-28 pb-6 px-4 md:px-8 lg:px-12 xl:px-16'}
+					${isZenMode 
+						? `pt-10 px-8 md:px-16 lg:px-24 xl:px-32 ${showStatusBar && showStatusBarInZenMode && statusBarLayout === 'bar' ? 'pb-14' : 'pb-10'}` 
+						: `pt-28 px-4 md:px-8 lg:px-12 xl:px-16 ${showStatusBar && statusBarLayout === 'bar' ? 'pb-14' : 'pb-6'}`
+					}
 					flex flex-col 
 					z-10
 					overflow-hidden
@@ -106,6 +116,8 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
 					</motion.div>
 				)}
 			</AnimatePresence>
+
+			<StatusBar />
 		</div>
 	);
 };

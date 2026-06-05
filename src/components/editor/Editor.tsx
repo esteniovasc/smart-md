@@ -6,6 +6,7 @@ import { openSearchPanel } from '@codemirror/search';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTabsStore } from '../../stores/useTabsStore';
 import { useSettingsStore } from '../../stores/useSettingsStore';
+import { useStatusBarStore } from '../../stores/useStatusBarStore';
 import { createLivePreviewExtension, livePreviewTheme } from './extensions/livePreview';
 import { statusLinesExtension, statusLinesTheme } from './extensions/statusLines';
 import { createBulletPointsExtension, bulletPointsTheme } from './extensions/bulletPoints';
@@ -214,6 +215,20 @@ export const Editor = () => {
 			// Inclui proteção contra "System Resets" (Tab Switching)
 			EditorView.updateListener.of((update) => {
 				if (!activeTabId) return;
+
+				// UPDATE STATUS BAR METRICS (Must run for programmatic changes too)
+				if (update.docChanged || update.selectionSet || update.viewportChanged) {
+					const head = update.state.selection.main.head;
+					const line = update.state.doc.lineAt(head);
+					const chars = update.state.doc.length;
+					const col = head - line.from + 1;
+					
+					useStatusBarStore.getState().setStats({
+						line: line.number,
+						col: col,
+						chars: chars
+					});
+				}
 
 				// Identificar se houve interação do usuário
 				const isUserEvent = update.transactions.some((tr) =>
